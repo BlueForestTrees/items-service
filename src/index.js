@@ -3,11 +3,11 @@ import {qtUnitCoef} from "trees-common/dist";
 const configure = db => {
 
     const upsertItem = async ({left, right}) =>
-        removeRoot({trunkId: left._id, rootId: right._id})
+        removeItem({leftId: left._id, rightId: right._id})
             .then(() => adaptQtUnit(left, right))
             .then(quantity => addRoot(left._id, right._id, quantity));
 
-    export const removeRoot = ({trunkId, rootId}) => db().update(withId(trunkId), pullItem(rootId));
+    const removeItem = ({leftId, rightId}) => db().update(withId(leftId), pullItem(rightId));
     const addRoot = async (trunkId, rootId, quantity) => db().update(withId(trunkId), pushItem({_id: rootId, quantity}), upsert);
 
     const adaptQtUnit = async (trunk, root) => {
@@ -44,9 +44,8 @@ const configure = db => {
     const setQuantity = ({_id, quantity}) => db().update(withId(_id), ({$set: {quantity}}), upsert);
 
     return {
-         upsertItem
+        upsertItem, removeItem
     }
 };
-
 
 export const init = configure;
