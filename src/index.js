@@ -56,4 +56,4 @@ const configure = db => {
     }
 };
 
-export const configureItemService = configure;
+export default configure;
