@@ -1,13 +1,21 @@
 {
   "name": "trees-items-service",
-  "version": "1.0.0",
+  "version": "0.0.0",
   "description": "",
-  "main": "./dist/index.js",
+  "main": "index.js",
+  "files": [
+    "index.js"
+  ],
   "scripts": {
+    "init": "yarn",
     "test": "mocha --exit --recursive test --require babel-register",
-    "build": "rimraf dist && npm run test && babel src --out-dir dist",
+    "build": "rimraf index.js && npm run test && babel src --out-dir .",
     "prepublishOnly": "npm run build",
-    "npmpublish": "npm publish"
+    "npmpublish": "npm publish",
+    "up-errors": "yarn upgrade -L trees-errors",
+    "up-query": "yarn upgrade -L trees-query",
+    "up-units": "yarn upgrade -L trees-units",
+    "up-all": "npm run up-errors && npm run up-query && npm run up-units"
   },
   "repository": {
     "type": "git",
@@ -21,7 +29,9 @@
   "homepage": "https://github.com/BlueForestTrees/trees-items-service#readme",
   "dependencies": {
     "lodash": "^4.17.5",
-    "trees-common": "^1.0.20"
+    "trees-errors": "^0.0.0",
+    "trees-query": "^0.0.9",
+    "trees-units": "^1.0.0"
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",

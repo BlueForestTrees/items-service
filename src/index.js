@@ -1,4 +1,6 @@
-import {qtUnitCoef} from "trees-common/dist";
+import {qtUnitCoef} from "trees-units";
+import {pullItem, pushItem, quantityField, upsert, withId} from "trees-query";
+import {GrandeurMismatchError, UnitInvalidError} from "trees-errors";
 
 const configure = db => {
 
@@ -44,8 +46,8 @@ const configure = db => {
     const setQuantity = ({_id, quantity}) => db().update(withId(_id), ({$set: {quantity}}), upsert);
 
     return {
-        upsertItem, removeItem
+        upsertItem, removeItem, setQuantity
     }
 };
 
-export const init = configure;
+export const configureItemService = configure;
