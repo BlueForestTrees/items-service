@@ -4,15 +4,15 @@ import {GrandeurMismatchError, UnitInvalidError} from "trees-errors";
 
 const configure = db => {
 
-    const insertItem = ({left, right}) =>
-        removeItem({leftId: left._id, rightId: right._id})
+    const insertItem = (left, right) =>
+        removeItem(left._id, right._id)
             .then(() => addItem(left._id, right._id));
 
-    const removeItem = ({leftId, rightId}) => db().update(withId(leftId), pullItem(rightId));
+    const removeItem = (leftId, rightId) => db().update(withId(leftId), pullItem(rightId));
     const addItem = async (leftId, rightId, quantity) => db().update(withId(leftId), pushItem({_id: rightId, quantity}), upsert);
 
-    const upsertItem = async ({left, right}) =>
-        removeItem({leftId: left._id, rightId: right._id})
+    const upsertItem = async (left, right) =>
+        removeItem(left._id, right._id)
             .then(() => adaptQtUnit(left, right))
             .then(quantity => addItem(left._id, right._id, quantity));
 
