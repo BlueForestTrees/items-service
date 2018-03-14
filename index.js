@@ -23,19 +23,26 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 var configure = function configure(db) {
 
-    var upsertItem = function () {
-        var _ref = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee(_ref2) {
-            var left = _ref2.left,
-                right = _ref2.right;
+    var insertItem = function insertItem(_ref) {
+        var left = _ref.left,
+            right = _ref.right;
+        return removeItem({ leftId: left._id, rightId: right._id }).then(function () {
+            return addItem(left._id, right._id);
+        });
+    };
+
+    var removeItem = function removeItem(_ref2) {
+        var leftId = _ref2.leftId,
+            rightId = _ref2.rightId;
+        return db().update((0, _treesQuery.withId)(leftId), (0, _treesQuery.pullItem)(rightId));
+    };
+    var addItem = function () {
+        var _ref3 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee(leftId, rightId, quantity) {
             return _regenerator2.default.wrap(function _callee$(_context) {
                 while (1) {
                     switch (_context.prev = _context.next) {
                         case 0:
-                            return _context.abrupt("return", removeItem({ leftId: left._id, rightId: right._id }).then(function () {
-                                return adaptQtUnit(left, right);
-                            }).then(function (quantity) {
-                                return addRoot(left._id, right._id, quantity);
-                            }));
+                            return _context.abrupt("return", db().update((0, _treesQuery.withId)(leftId), (0, _treesQuery.pushItem)({ _id: rightId, quantity: quantity }), _treesQuery.upsert));
 
                         case 1:
                         case "end":
@@ -45,23 +52,24 @@ var configure = function configure(db) {
             }, _callee, undefined);
         }));
 
-        return function upsertItem(_x) {
-            return _ref.apply(this, arguments);
+        return function addItem(_x, _x2, _x3) {
+            return _ref3.apply(this, arguments);
         };
     }();
 
-    var removeItem = function removeItem(_ref3) {
-        var leftId = _ref3.leftId,
-            rightId = _ref3.rightId;
-        return db().update((0, _treesQuery.withId)(leftId), (0, _treesQuery.pullItem)(rightId));
-    };
-    var addRoot = function () {
-        var _ref4 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee2(trunkId, rootId, quantity) {
+    var upsertItem = function () {
+        var _ref4 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee2(_ref5) {
+            var left = _ref5.left,
+                right = _ref5.right;
             return _regenerator2.default.wrap(function _callee2$(_context2) {
                 while (1) {
                     switch (_context2.prev = _context2.next) {
                         case 0:
-                            return _context2.abrupt("return", db().update((0, _treesQuery.withId)(trunkId), (0, _treesQuery.pushItem)({ _id: rootId, quantity: quantity }), _treesQuery.upsert));
+                            return _context2.abrupt("return", removeItem({ leftId: left._id, rightId: right._id }).then(function () {
+                                return adaptQtUnit(left, right);
+                            }).then(function (quantity) {
+                                return addItem(left._id, right._id, quantity);
+                            }));
 
                         case 1:
                         case "end":
@@ -71,27 +79,27 @@ var configure = function configure(db) {
             }, _callee2, undefined);
         }));
 
-        return function addRoot(_x2, _x3, _x4) {
+        return function upsertItem(_x4) {
             return _ref4.apply(this, arguments);
         };
     }();
 
     var adaptQtUnit = function () {
-        var _ref5 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee3(trunk, root) {
+        var _ref6 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee3(left, right) {
             var dbTrunkQt, trunkCoef;
             return _regenerator2.default.wrap(function _callee3$(_context3) {
                 while (1) {
                     switch (_context3.prev = _context3.next) {
                         case 0:
                             _context3.next = 2;
-                            return getSertQuantity(trunk);
+                            return getSertQuantity(left);
 
                         case 2:
                             dbTrunkQt = _context3.sent;
                             trunkCoef = 0;
                             _context3.prev = 4;
 
-                            trunkCoef = (0, _treesUnits.qtUnitCoef)(dbTrunkQt, trunk.quantity);
+                            trunkCoef = (0, _treesUnits.qtUnitCoef)(dbTrunkQt, left.quantity);
                             _context3.next = 12;
                             break;
 
@@ -107,7 +115,7 @@ var configure = function configure(db) {
                             throw new _treesErrors.UnitInvalidError("unit\xE9 incompatible", _context3.t0);
 
                         case 12:
-                            return _context3.abrupt("return", { qt: trunkCoef * root.quantity.qt, unit: root.quantity.unit });
+                            return _context3.abrupt("return", { qt: trunkCoef * right.quantity.qt, unit: right.quantity.unit });
 
                         case 13:
                         case "end":
@@ -118,20 +126,20 @@ var configure = function configure(db) {
         }));
 
         return function adaptQtUnit(_x5, _x6) {
-            return _ref5.apply(this, arguments);
+            return _ref6.apply(this, arguments);
         };
     }();
 
     var getSertQuantity = function () {
-        var _ref6 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee4(trunk) {
+        var _ref7 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee4(trunk) {
             var trunkQuantity;
             return _regenerator2.default.wrap(function _callee4$(_context4) {
                 while (1) {
                     switch (_context4.prev = _context4.next) {
                         case 0:
                             _context4.next = 2;
-                            return readForQuantity(trunk._id).then(function (root) {
-                                return root && root.quantity || null;
+                            return readForQuantity(trunk._id).then(function (item) {
+                                return item && item.quantity || null;
                             });
 
                         case 2:
@@ -168,12 +176,12 @@ var configure = function configure(db) {
         }));
 
         return function getSertQuantity(_x7) {
-            return _ref6.apply(this, arguments);
+            return _ref7.apply(this, arguments);
         };
     }();
 
     var readForQuantity = function () {
-        var _ref7 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee5(id) {
+        var _ref8 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee5(id) {
             return _regenerator2.default.wrap(function _callee5$(_context5) {
                 while (1) {
                     switch (_context5.prev = _context5.next) {
@@ -189,18 +197,18 @@ var configure = function configure(db) {
         }));
 
         return function readForQuantity(_x8) {
-            return _ref7.apply(this, arguments);
+            return _ref8.apply(this, arguments);
         };
     }();
 
-    var setQuantity = function setQuantity(_ref8) {
-        var _id = _ref8._id,
-            quantity = _ref8.quantity;
+    var setQuantity = function setQuantity(_ref9) {
+        var _id = _ref9._id,
+            quantity = _ref9.quantity;
         return db().update((0, _treesQuery.withId)(_id), { $set: { quantity: quantity } }, _treesQuery.upsert);
     };
 
     return {
-        upsertItem: upsertItem, removeItem: removeItem, setQuantity: setQuantity
+        setQuantity: setQuantity, insertItem: insertItem
     };
 };
 
