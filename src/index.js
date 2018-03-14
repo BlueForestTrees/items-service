@@ -52,7 +52,7 @@ const configure = db => {
     const setQuantity = ({_id, quantity}) => db().update(withId(_id), ({$set: {quantity}}), upsert);
 
     return {
-        setQuantity, insertItem
+        setQuantity, insertItem, upsertItem
     }
 };
 
