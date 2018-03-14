@@ -1,14 +1,16 @@
 import {qtUnitCoef} from "trees-units";
-import {pullItem, pushItem, quantityField, upsert, withId} from "trees-query";
+import {pullItem, pullItems, pushItem, quantityField, upsert, withId} from "trees-query";
 import {GrandeurMismatchError, UnitInvalidError} from "trees-errors";
 
 const configure = db => {
+
+    const deleteItems = (trunkId, itemsIds) => db().update(withId(trunkId), pullItems(itemsIds));
+    const removeItem = (leftId, rightId) => db().update(withId(leftId), pullItem(rightId));
 
     const insertItem = (left, right) =>
         removeItem(left._id, right._id)
             .then(() => addItem(left._id, right._id));
 
-    const removeItem = (leftId, rightId) => db().update(withId(leftId), pullItem(rightId));
     const addItem = async (leftId, rightId, quantity) => db().update(withId(leftId), pushItem({_id: rightId, quantity}), upsert);
 
     const upsertItem = async (left, right) =>
@@ -52,7 +54,7 @@ const configure = db => {
     const setQuantity = ({_id, quantity}) => db().update(withId(_id), ({$set: {quantity}}), upsert);
 
     return {
-        setQuantity, insertItem, upsertItem, removeItem
+        setQuantity, insertItem, upsertItem, removeItem, deleteItems
     }
 };
 
