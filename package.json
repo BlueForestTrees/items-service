@@ -28,7 +28,6 @@
   },
   "homepage": "https://github.com/BlueForestTrees/trees-items-service#readme",
   "dependencies": {
-    "lodash": "^4.17.5",
     "trees-errors": "^0.0.0",
     "trees-query": "^0.0.9",
     "trees-units": "^1.0.0"
