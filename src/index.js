@@ -4,32 +4,38 @@ import {GrandeurMismatchError, UnitInvalidError} from "trees-errors";
 
 const configure = db => {
 
+    const insertItem = ({left, right}) =>
+        removeItem({leftId: left._id, rightId: right._id})
+            .then(() => addItem(left._id, right._id));
+
+    const removeItem = ({leftId, rightId}) => db().update(withId(leftId), pullItem(rightId));
+    const addItem = async (leftId, rightId, quantity) => db().update(withId(leftId), pushItem({_id: rightId, quantity}), upsert);
+
     const upsertItem = async ({left, right}) =>
         removeItem({leftId: left._id, rightId: right._id})
             .then(() => adaptQtUnit(left, right))
-            .then(quantity => addRoot(left._id, right._id, quantity));
+            .then(quantity => addItem(left._id, right._id, quantity));
 
-    const removeItem = ({leftId, rightId}) => db().update(withId(leftId), pullItem(rightId));
-    const addRoot = async (trunkId, rootId, quantity) => db().update(withId(trunkId), pushItem({_id: rootId, quantity}), upsert);
 
-    const adaptQtUnit = async (trunk, root) => {
-        let dbTrunkQt = await getSertQuantity(trunk);
+    const adaptQtUnit = async (left, right) => {
+        let dbTrunkQt = await getSertQuantity(left);
         let trunkCoef = 0;
 
         try {
-            trunkCoef = qtUnitCoef(dbTrunkQt, trunk.quantity);
+            trunkCoef = qtUnitCoef(dbTrunkQt, left.quantity);
         } catch (e) {
             if (e instanceof GrandeurMismatchError) {
                 throw new UnitInvalidError(`unité incompatible`, e);
             }
         }
 
-        return {qt: trunkCoef * root.quantity.qt, unit: root.quantity.unit};
+        return {qt: trunkCoef * right.quantity.qt, unit: right.quantity.unit};
     };
 
     const getSertQuantity = async trunk => {
-        const trunkQuantity = await readForQuantity(trunk._id)
-            .then(root => root && root.quantity || null);
+        const trunkQuantity =
+            await readForQuantity(trunk._id)
+                .then(item => item && item.quantity || null);
 
         if (trunkQuantity) {
             return trunkQuantity;
@@ -46,7 +52,7 @@ const configure = db => {
     const setQuantity = ({_id, quantity}) => db().update(withId(_id), ({$set: {quantity}}), upsert);
 
     return {
-        upsertItem, removeItem, setQuantity
+        setQuantity, insertItem
     }
 };
 
