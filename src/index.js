@@ -28,6 +28,8 @@ const configure = db => {
         } catch (e) {
             if (e instanceof GrandeurMismatchError) {
                 throw new UnitInvalidError(`unité incompatible`, e);
+            } else {
+                throw e;
             }
         }
 
