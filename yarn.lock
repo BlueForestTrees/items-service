@@ -1726,9 +1726,9 @@ trees-query@^0.0.9:
     lodash "^4.17.5"
     mongodb "^3.0.4"
 
-trees-units@^1.0.7:
-  version "1.0.7"
-  resolved "https://registry.yarnpkg.com/trees-units/-/trees-units-1.0.7.tgz#6c8d38fd3d8be655cbcf4896a6d629cb9b60f249"
+trees-units@^1.0.9:
+  version "1.0.9"
+  resolved "https://registry.yarnpkg.com/trees-units/-/trees-units-1.0.9.tgz#67efac19ab0b352b04aa7bbfa1219932979523f0"
   dependencies:
     fraction.js "^4.0.4"
     lodash "^4.17.5"
