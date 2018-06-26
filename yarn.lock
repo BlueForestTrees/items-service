@@ -1719,9 +1719,9 @@ trees-errors@^0.0.0:
   dependencies:
     nested-error-stacks "^2.0.0"
 
-trees-query@^0.0.9:
-  version "0.0.9"
-  resolved "https://registry.yarnpkg.com/trees-query/-/trees-query-0.0.9.tgz#00852392ab93448b99b3855815e062ad93157af3"
+trees-query@^0.0.10:
+  version "0.0.10"
+  resolved "https://registry.yarnpkg.com/trees-query/-/trees-query-0.0.10.tgz#670e0e0db030c74b46e0ab5fda170aae265df69d"
   dependencies:
     lodash "^4.17.5"
     mongodb "^3.0.4"
