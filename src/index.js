@@ -9,14 +9,16 @@ const configure = db => {
 
     const insertItem = (left, right) =>
         removeItem(left._id, right._id)
-            .then(() => addItem(left._id, right._id));
+            .then(() => addItem(left._id, right));
 
-    const addItem = async (leftId, rightId, quantity) => db().update(withId(leftId), pushItem({_id: rightId, quantity}), upsert);
+    const addItem = async (id, item) =>
+        db()
+            .update(withId(id), pushItem(item), upsert);
 
     const upsertItem = async (left, right) =>
         removeItem(left._id, right._id)
             .then(() => adaptQtUnit(left, right))
-            .then(quantity => addItem(left._id, right._id, quantity));
+            .then(quantity => addItem(left._id, {...right, quantity}));
 
 
     const adaptQtUnit = async (left, right) => {
