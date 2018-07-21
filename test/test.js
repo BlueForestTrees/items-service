@@ -4,11 +4,6 @@ import {object} from "trees-query";
 
 chai.should();
 
-beforeEach(async () => {
-    //rien
-});
-
-
 describe('TU items service', function () {
 
     it('set quantity query', async function () {
