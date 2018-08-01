@@ -29,19 +29,19 @@
   "homepage": "https://github.com/BlueForestTrees/items-service#readme",
   "dependencies": {
     "errors-blueforest": "1.0.0",
-    "mongo-queries-blueforest": "1.0.0",
+    "mongo-queries-blueforest": "1.0.1",
     "unit-manip": "1.0.1"
   },
   "devDependencies": {
-    "babel-cli": "^6.26.0",
-    "babel-plugin-transform-builtin-extend": "^1.1.2",
-    "babel-plugin-transform-runtime": "^6.23.0",
-    "babel-polyfill": "^6.26.0",
-    "babel-preset-env": "^1.6.1",
-    "babel-preset-stage-3": "^6.24.1",
-    "chai": "^4.1.2",
-    "mocha": "^5.0.3",
-    "rimraf": "^2.6.2"
+    "babel-cli": "6.26.0",
+    "babel-plugin-transform-builtin-extend": "1.1.2",
+    "babel-plugin-transform-runtime": "6.23.0",
+    "babel-polyfill": "6.26.0",
+    "babel-preset-env": "1.6.1",
+    "babel-preset-stage-3": "6.24.1",
+    "chai": "4.1.2",
+    "mocha": "5.0.3",
+    "rimraf": "2.6.2"
   },
   "babel": {
     "presets": [
