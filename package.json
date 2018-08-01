@@ -29,8 +29,8 @@
   "homepage": "https://github.com/BlueForestTrees/items-service#readme",
   "dependencies": {
     "errors-blueforest": "1.0.0",
-    "mongo-queries-blueforest": "^0.0.10",
-    "unit-manip": "^1.0.11"
+    "mongo-queries-blueforest": "1.0.0",
+    "unit-manip": "1.0.0"
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",
