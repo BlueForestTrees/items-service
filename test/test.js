@@ -15,7 +15,7 @@ describe('TU items service', function () {
         };
 
         configure(db)
-            .setQuantity({_id: "5a6a03c03e77667641d2d2c2", quantity: {qt: 15, unit: "kg"}})
+            .setQuantity({_id: object("5a6a03c03e77667641d2d2c2"), quantity: {qt: 15, unit: "kg"}})
             .should.deep.equal({
             select: {_id: object("5a6a03c03e77667641d2d2c2")},
             update: {
