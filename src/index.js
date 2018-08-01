@@ -1,4 +1,4 @@
-import {qtUnitCoef} from "units-manip";
+import {qtUnitCoef} from "unit-manip";
 import {pullItem, pullItems, pushItem, quantityField, upsert, withId} from "mongo-queries-blueforest";
 import {GrandeurMismatchError, UnitInvalidError} from "errors-blueforest";
 
