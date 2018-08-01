@@ -28,7 +28,7 @@
   },
   "homepage": "https://github.com/BlueForestTrees/items-service#readme",
   "dependencies": {
-    "errors-blueforest": "^0.0.0",
+    "errors-blueforest": "1.0.0",
     "mongo-queries-blueforest": "^0.0.10",
     "unit-manip": "^1.0.11"
   },
