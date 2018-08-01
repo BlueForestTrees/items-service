@@ -1713,22 +1713,22 @@ tough-cookie@~2.3.0:
   dependencies:
     punycode "^1.4.1"
 
-trees-errors@^0.0.0:
+errors-blueforest@^0.0.0:
   version "0.0.0"
-  resolved "https://registry.yarnpkg.com/trees-errors/-/trees-errors-0.0.0.tgz#f936f6064250fc38d9fcc44119a4cc548dc66308"
+  resolved "https://registry.yarnpkg.com/errors-blueforest/-/errors-blueforest-0.0.0.tgz#f936f6064250fc38d9fcc44119a4cc548dc66308"
   dependencies:
     nested-error-stacks "^2.0.0"
 
-trees-query@^0.0.10:
+mongo-queries-blueforest@^0.0.10:
   version "0.0.10"
-  resolved "https://registry.yarnpkg.com/trees-query/-/trees-query-0.0.10.tgz#670e0e0db030c74b46e0ab5fda170aae265df69d"
+  resolved "https://registry.yarnpkg.com/mongo-queries-blueforest/-/mongo-queries-blueforest-0.0.10.tgz#670e0e0db030c74b46e0ab5fda170aae265df69d"
   dependencies:
     lodash "^4.17.5"
     mongodb "^3.0.4"
 
-trees-units@^1.0.11:
+units-manip@^1.0.11:
   version "1.0.11"
-  resolved "https://registry.yarnpkg.com/trees-units/-/trees-units-1.0.11.tgz#5c84fa6e7239eba49bf4150b3596e7a8bc707d02"
+  resolved "https://registry.yarnpkg.com/units-manip/-/units-manip-1.0.11.tgz#5c84fa6e7239eba49bf4150b3596e7a8bc707d02"
   dependencies:
     fraction.js "^4.0.4"
     lodash "^4.17.5"

@@ -1,6 +1,6 @@
 import chai from 'chai';
 import configure from "../src";
-import {object} from "trees-query";
+import {object} from "mongo-queries-blueforest";
 import _ from 'lodash';
 
 chai.should();

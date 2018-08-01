@@ -1,5 +1,5 @@
 {
-  "name": "trees-items-service",
+  "name": "items-service",
   "version": "0.1.18",
   "description": "",
   "main": "index.js",
@@ -12,25 +12,25 @@
     "build": "rimraf index.js && npm run test && babel src --out-dir .",
     "prepublishOnly": "npm version patch && npm run build",
     "npmpublish": "npm publish",
-    "up-errors": "yarn upgrade -L trees-errors",
-    "up-query": "yarn upgrade -L trees-query",
-    "up-units": "yarn upgrade -L trees-units",
+    "up-errors": "yarn upgrade -L errors-blueforest",
+    "up-query": "yarn upgrade -L mongo-queries-blueforest",
+    "up-units": "yarn upgrade -L unit-manip",
     "up-all": "npm run up-errors && npm run up-query && npm run up-units"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/BlueForestTrees/trees-items-service.git"
+    "url": "git+https://github.com/BlueForestTrees/items-service.git"
   },
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/BlueForestTrees/trees-items-service/issues"
+    "url": "https://github.com/BlueForestTrees/items-service/issues"
   },
-  "homepage": "https://github.com/BlueForestTrees/trees-items-service#readme",
+  "homepage": "https://github.com/BlueForestTrees/items-service#readme",
   "dependencies": {
-    "trees-errors": "^0.0.0",
-    "trees-query": "^0.0.10",
-    "trees-units": "^1.0.11"
+    "errors-blueforest": "^0.0.0",
+    "mongo-queries-blueforest": "^0.0.10",
+    "unit-manip": "^1.0.11"
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",

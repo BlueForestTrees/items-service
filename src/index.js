@@ -1,6 +1,6 @@
-import {qtUnitCoef} from "trees-units";
-import {pullItem, pullItems, pushItem, quantityField, upsert, withId} from "trees-query";
-import {GrandeurMismatchError, UnitInvalidError} from "trees-errors";
+import {qtUnitCoef} from "units-manip";
+import {pullItem, pullItems, pushItem, quantityField, upsert, withId} from "mongo-queries-blueforest";
+import {GrandeurMismatchError, UnitInvalidError} from "errors-blueforest";
 
 const configure = db => {
 
