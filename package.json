@@ -30,7 +30,7 @@
   "dependencies": {
     "errors-blueforest": "1.0.0",
     "mongo-queries-blueforest": "1.0.1",
-    "unit-manip": "1.0.1"
+    "unit-manip": "1.0.3"
   },
   "devDependencies": {
     "babel-cli": "6.26.0",
