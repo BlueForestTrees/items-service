@@ -29,6 +29,7 @@
   "homepage": "https://github.com/BlueForestTrees/items-service#readme",
   "dependencies": {
     "errors-blueforest": "1.0.0",
+    "fraction.js": "^4.0.9",
     "mongo-queries-blueforest": "1.0.1"
   },
   "devDependencies": {

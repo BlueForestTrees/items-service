@@ -918,9 +918,9 @@ form-data@~2.1.1:
     combined-stream "^1.0.5"
     mime-types "^2.1.12"
 
-fraction.js@4.0.4:
-  version "4.0.4"
-  resolved "https://registry.yarnpkg.com/fraction.js/-/fraction.js-4.0.4.tgz#04e567110718adf7b52974a10434ab4c67a5183e"
+fraction.js@^4.0.9:
+  version "4.0.9"
+  resolved "https://registry.yarnpkg.com/fraction.js/-/fraction.js-4.0.9.tgz#ef7aa1ad47ef600021ad7fa7991dfd56c3b5f7c8"
 
 fs-readdir-recursive@^1.0.0:
   version "1.1.0"
@@ -1773,12 +1773,6 @@ type-detect@^4.0.0:
 uid-number@^0.0.6:
   version "0.0.6"
   resolved "https://registry.yarnpkg.com/uid-number/-/uid-number-0.0.6.tgz#0ea10e8035e8eb5b8e4449f06da1c730663baa81"
-
-unit-manip@^1.0.3:
-  version "1.0.3"
-  resolved "https://registry.yarnpkg.com/unit-manip/-/unit-manip-1.0.3.tgz#1b26d165127a6b9caa945c5f386fba8394a7d7c3"
-  dependencies:
-    fraction.js "4.0.4"
 
 user-home@^1.1.1:
   version "1.1.1"
