@@ -1,5 +1,6 @@
-import {pullItem, pullItems, pushItem, quantityField, upsert, withId, withIdBqtG, matchId, withIdIn} from "mongo-queries-blueforest";
+import {pullItem, pullItems, pushItem, quantityField, upsert, withId, matchId, withIdIn, withIdBqt} from "mongo-queries-blueforest"
 import {map, omit, forEach, find, cloneDeep} from "lodash"
+import Fraction from "fraction.js"
 
 const configure = col => {
 
@@ -43,22 +44,22 @@ const configure = col => {
         }
     })
 
-   const initReadTree = collectionName => ({bqt, g, _id}) =>
+    const initReadTree = collectionName => ({_id}) =>
         getGraph(_id, graphLookup(collectionName))
-            .then(graph => graph && treefy({bqt, g}, graph))
-            .then(tree => tree || {...withIdBqtG(_id, bqt, g), items: []})
+            .then(treefy)
+            .then(tree => tree || {...withIdBqt(_id, 1), items: []})
 
 
     const getGraph = (_id, lookup) => col().aggregate([matchId(_id), lookup]).next()
 
-    const treefy = (quantity, graph) => {
+    const treefy = (graph) => {
+        if (!graph) return null
 
         const cache = graph.cache
         const tree = omit(graph, "cache")
 
-        applyQuantity(quantity, tree)
-
         tree.items = loadFromCache(tree, cache)
+        tree.quantity = {bqt: 1}
 
         return tree
     }
@@ -67,10 +68,10 @@ const configure = col => {
         const items = []
         forEach(tree.items, item => {
             item.items = []
-            let foundInCache = find(cache, {_id: item._id})
-            if (foundInCache) {
-                const cachedItem = cloneDeep(foundInCache)
-                applyQuantity(item.quantity, cachedItem)
+            let cachedItem = cloneDeep(find(cache, {_id: item._id}))
+            if (cachedItem) {
+                multiplyBqt(cachedItem, item.quantity && item.quantity.bqt)
+                cachedItem.quantity = item.quantity
                 cachedItem.items = loadFromCache(cachedItem, cache)
                 items.push(cachedItem)
             } else {
@@ -80,7 +81,17 @@ const configure = col => {
         return items
     }
 
-    const load = _id => col().findOne(withId(_id)).then(i => i || {_id, items: []})
+    const multiplyBqt = (tree, coef) => {
+        if (coef) {
+            tree.items = map(tree, item => item.quantity ?
+                ({...item, quantity: {bqt: Fraction(item.quantity.bqt).mul(coef).valueOf()}})
+                :
+                omit(item, "quantity")
+            )
+        } else {
+            tree.items = map(tree, item => omit(item, "quantity"))
+        }
+    }
 
     const deleteItems = (trunkId, itemsIds) => col().update(withId(trunkId), pullItems(itemsIds));
     const removeItem = (leftId, rightId) => col().update(withId(leftId), pullItem(rightId));
@@ -113,14 +124,20 @@ const configure = col => {
         return dbTrunk
     };
 
-    const readBqt = async (id) => col().findOne(withId(id), quantityField)
+    const readBqt = async id => col().findOne(withId(id), quantityField)
+
+    const readAllQuantified = async items => Promise.all(map(items, readQuantified))
+
+    const readQuantified = ({bqt, _id}) => get(_id).then(item => multiplyBqt(bqt, item) && item)
+
 
     const setBqt = ({_id, quantity}) => col().update(withId(_id), ({$set: {quantity}}), upsert)
 
     return {
         get,
         appendItemsInfos,
-        insertItem, upsertItem, removeItem, deleteItems, initReadTree
+        insertItem, upsertItem, removeItem, deleteItems, initReadTree,
+        readAllQuantified
     }
 };
 
