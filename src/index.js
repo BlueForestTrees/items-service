@@ -101,31 +101,27 @@ const configure = db => {
 
     const upsertItem = async (left, right) =>
         removeItem(left._id, right._id)
-            .then(() => adaptQtUnit(left, right))
-            .then((q) => {
-                return q
-            })
-            .then(quantity => addItem(left._id, {...right, quantity}));
+            .then(() => adaptBqt(left, right))
+            .then(bqt => addItem(left._id, {...right, quantity: {bqt}}));
 
 
-    const adaptQtUnit = async (left, right) => {
-        let dbTrunk = await getSertQuantity(left)
-        let coef = dbTrunk.quantity.bqt / left.quantity.bqt
-        return {bqt: coef * right.quantity.bqt, g: right.quantity.g}
-    };
+    const adaptBqt = async (left, right) => (await getSertBqt(left)).quantity.bqt / left.quantity.bqt * right.quantity.bqt
 
-    const getSertQuantity = async trunk => {
-        let dbTrunk = await readForQuantity(trunk._id)
-        if (!dbTrunk) {
-            await setQuantity(trunk)
+    const getSertBqt = async trunk => {
+        console.log("GET SERT", trunk)
+        let dbTrunk = await readBqt(trunk._id)
+        console.log("GET SERT DB TRUNK", dbTrunk)
+        if (!dbTrunk || !dbTrunk.quantity) {
+            await setBqt(trunk)
+            console.log("GET SERT INSERTED", trunk)
             dbTrunk = trunk
         }
         return dbTrunk
     };
 
-    const readForQuantity = async (id) => db().findOne(withId(id), quantityField);
+    const readBqt = async (id) => db().findOne(withId(id), quantityField)
 
-    const setQuantity = ({_id, quantity}) => db().update(withId(_id), ({$set: {quantity}}), upsert);
+    const setBqt = ({_id, quantity}) => db().update(withId(_id), ({$set: {quantity}}), upsert)
 
     return {
         insertItem, upsertItem, removeItem, deleteItems, loadQuantified, initReadTree
