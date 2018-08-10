@@ -1,6 +1,5 @@
-import chai from 'chai';
-import configure from "../src";
-import {object} from "mongo-queries-blueforest";
+import chai, {expect} from 'chai'
+import configure, {multiplyBqt} from "../src"
 
 chai.should();
 
@@ -16,5 +15,32 @@ describe('TU items service', function () {
         configure(db)
 
     });
+
+    it('multiply bqt of items', function () {
+        const item = {
+            "_id": "444444444444444444444444",
+            "items": [
+                {
+                    "_id": "5a6a03c03e77667641d2d2c9",
+                    "quantity": {
+                        "bqt": 4
+                    }
+                }
+            ]
+        }
+        const itemBy2 = {
+            "_id": "444444444444444444444444",
+            "items": [
+                {
+                    "_id": "5a6a03c03e77667641d2d2c9",
+                    "quantity": {
+                        "bqt": 8
+                    }
+                }
+            ]
+        }
+        expect(multiplyBqt(item, 2)).to.deep.equal(itemBy2)
+    })
+
 
 });

@@ -2,6 +2,19 @@ import {pullItem, pullItems, pushItem, quantityField, upsert, withId, matchId, w
 import {map, omit, forEach, find, cloneDeep} from "lodash"
 import Fraction from "fraction.js"
 
+export const multiplyBqt = (tree, coef) => {
+    if (coef) {
+        tree.items = map(tree.items, item => item.quantity ?
+            ({...item, quantity: {bqt: Fraction(item.quantity.bqt).mul(coef).valueOf()}})
+            :
+            omit(item, "quantity")
+        )
+    } else {
+        tree.items = map(tree, item => omit(item, "quantity"))
+    }
+    return tree
+}
+
 const configure = col => {
 
     const get = ({_id}) => col().findOne(withId(_id)).then(i => i || {_id, items: []})
@@ -21,17 +34,6 @@ const configure = col => {
         }
         return item
     }
-
-
-
-
-
-
-
-
-
-
-
 
     const graphLookup = collectionName => ({
         $graphLookup: {
@@ -81,18 +83,6 @@ const configure = col => {
         return items
     }
 
-    const multiplyBqt = (tree, coef) => {
-        if (coef) {
-            tree.items = map(tree, item => item.quantity ?
-                ({...item, quantity: {bqt: Fraction(item.quantity.bqt).mul(coef).valueOf()}})
-                :
-                omit(item, "quantity")
-            )
-        } else {
-            tree.items = map(tree, item => omit(item, "quantity"))
-        }
-    }
-
     const deleteItems = (trunkId, itemsIds) => col().update(withId(trunkId), pullItems(itemsIds));
     const removeItem = (leftId, rightId) => col().update(withId(leftId), pullItem(rightId));
 
@@ -126,18 +116,37 @@ const configure = col => {
 
     const readBqt = async id => col().findOne(withId(id), quantityField)
 
-    const readAllQuantified = async items => Promise.all(map(items, readQuantified))
-
-    const readQuantified = ({bqt, _id}) => get(_id).then(item => multiplyBqt(bqt, item) && item)
-
+    const readAllQuantified = async items => Promise.all(map(items,
+        item => item.quantity ?
+            get(item).then(i => multiplyBqt(i, item.quantity && item.quantity.bqt))
+            :
+            withId(item._id)
+    ))
 
     const setBqt = ({_id, quantity}) => col().update(withId(_id), ({$set: {quantity}}), upsert)
 
+    const insertOne = item => col().insertOne(item)
+
+    const update = item => col().update(withId(item._id), ({$set: item}))
+
+    const deleteOne = item => col().deleteOne(item)
+
+    const withIdsIn = _ids => col().find(withIdIn(_ids)).toArray()
+
     return {
+        withIdsIn,
+        deleteOne,
+        findOne,
         get,
         appendItemsInfos,
-        insertItem, upsertItem, removeItem, deleteItems, initReadTree,
-        readAllQuantified
+        insertItem,
+        upsertItem,
+        removeItem,
+        deleteItems,
+        initReadTree,
+        readAllQuantified,
+        insertOne,
+        update
     }
 };
 
