@@ -16,25 +16,10 @@ export const multiplyBqt = (tree, coef) => {
 }
 
 const configure = col => {
-
-    const get = ({_id}) => col().findOne(withId(_id)).then(i => i || {_id, items: []})
-
-    const appendItemsInfos = mixin => async item => {
-        const items = item.items
-        const infos = await col().find(withIdIn(map(items, "_id")), mixin).toArray()
-
-        for (let i = 0; i < items.length; i++) {
-            let item = items[i]
-            for (let j = 0; j < infos.length; j++) {
-                let info = infos[j]
-                if (item._id.equals(info._id)) {
-                    Object.assign(item, info)
-                }
-            }
-        }
-        return item
-    }
-
+    //PRIVATE
+    const setBqt = ({_id, quantity}) => col().update(withId(_id), ({$set: {quantity}}), upsert)
+    const readBqt = async id => col().findOne(withId(id), quantityField)
+    const addItem = async (id, item) => col().update(withId(id), pushItem(item), upsert)
     const graphLookup = collectionName => ({
         $graphLookup: {
             from: collectionName,
@@ -45,15 +30,7 @@ const configure = col => {
             as: "cache"
         }
     })
-
-    const initReadTree = collectionName => ({_id}) =>
-        getGraph(_id, graphLookup(collectionName))
-            .then(treefy)
-            .then(tree => tree || {...withIdBqt(_id, 1), items: []})
-
-
     const getGraph = (_id, lookup) => col().aggregate([matchId(_id), lookup]).next()
-
     const treefy = (graph) => {
         if (!graph) return null
 
@@ -65,7 +42,6 @@ const configure = col => {
 
         return tree
     }
-
     const loadFromCache = (tree, cache) => {
         const items = []
         forEach(tree.items, item => {
@@ -82,40 +58,38 @@ const configure = col => {
         })
         return items
     }
-
-    const deleteItems = (trunkId, itemsIds) => col().update(withId(trunkId), pullItems(itemsIds));
-    const removeItem = (leftId, rightId) => col().update(withId(leftId), pullItem(rightId));
-
-    const insertItem = (left, right) =>
-        removeItem(left._id, right._id)
-            .then(() => addItem(left._id, right));
-
-    const addItem = async (id, item) =>
-        col()
-            .update(withId(id), pushItem(item), upsert);
-
-    const upsertItem = async (left, right) =>
-        removeItem(left._id, right._id)
-            .then(() => adaptBqt(left, right))
-            .then(bqt => addItem(left._id, {...right, quantity: {bqt}}));
-
-
     const adaptBqt = async (left, right) => (await getSertBqt(left)).quantity.bqt / left.quantity.bqt * right.quantity.bqt
-
     const getSertBqt = async trunk => {
-        console.log("GET SERT", trunk)
         let dbTrunk = await readBqt(trunk._id)
-        console.log("GET SERT DB TRUNK", dbTrunk)
         if (!dbTrunk || !dbTrunk.quantity) {
             await setBqt(trunk)
-            console.log("GET SERT INSERTED", trunk)
             dbTrunk = trunk
         }
         return dbTrunk
     };
 
-    const readBqt = async id => col().findOne(withId(id), quantityField)
+    //LECTURE
+    const withIdsIn = _ids => col().find(withIdIn(_ids)).toArray()
+    const get = ({_id}) => col().findOne(withId(_id)).then(i => i || {_id, items: []})
+    const appendItemsInfos = mixin => async item => {
+        const items = item.items
+        const infos = await col().find(withIdIn(map(items, "_id")), mixin).toArray()
 
+        for (let i = 0; i < items.length; i++) {
+            let item = items[i]
+            for (let j = 0; j < infos.length; j++) {
+                let info = infos[j]
+                if (item._id.equals(info._id)) {
+                    Object.assign(item, info)
+                }
+            }
+        }
+        return item
+    }
+    const initReadTree = collectionName => ({_id}) =>
+        getGraph(_id, graphLookup(collectionName))
+            .then(treefy)
+            .then(tree => tree || {...withIdBqt(_id, 1), items: []})
     const readAllQuantified = async items => Promise.all(map(items,
         item => item.quantity ?
             get(item).then(i => multiplyBqt(i, item.quantity && item.quantity.bqt))
@@ -123,30 +97,25 @@ const configure = col => {
             withId(item._id)
     ))
 
-    const setBqt = ({_id, quantity}) => col().update(withId(_id), ({$set: {quantity}}), upsert)
-
+    //ECRITURE
+    const update = item => col().update(withId(item._id), ({$set: item}))
+    const upsertItem = async (left, right) => removeItem(left._id, right._id).then(() => adaptBqt(left, right)).then(bqt => addItem(left._id, {...right, quantity: {bqt}}))
+    const insertItem = (left, right) => removeItem(left._id, right._id).then(() => addItem(left._id, right))
     const insertOne = item => col().insertOne(item)
 
-    const update = item => col().update(withId(item._id), ({$set: item}))
-
+    //SUPPR
     const deleteOne = item => col().deleteOne(item)
-
-    const withIdsIn = _ids => col().find(withIdIn(_ids)).toArray()
+    const removeItem = (leftId, rightId) => col().update(withId(leftId), pullItem(rightId))
+    const deleteItems = (trunkId, itemsIds) => col().update(withId(trunkId), pullItems(itemsIds))
 
     return {
-        withIdsIn,
-        deleteOne,
-        findOne,
-        get,
-        appendItemsInfos,
-        insertItem,
-        upsertItem,
-        removeItem,
-        deleteItems,
-        initReadTree,
-        readAllQuantified,
-        insertOne,
-        update
+        //ECRITURE
+        withIdsIn, get, appendItemsInfos, initReadTree, readAllQuantified,
+        //ECRITURE
+        update, upsertItem, insertItem, insertOne,
+        //SUPPR
+        deleteOne, removeItem, deleteItems,
+
     }
 };
 
