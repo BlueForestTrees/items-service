@@ -1,6 +1,7 @@
 import {pullItem, pullItems, pushItem, quantityField, upsert, withId, matchId, withIdIn, withIdBqt} from "mongo-queries-blueforest"
 import {map, omit, forEach, find, cloneDeep} from "lodash"
 import Fraction from "fraction.js"
+import regexEscape from "regex-escape"
 
 export const multiplyBqt = (tree, coef) => {
     if (coef) {
@@ -33,7 +34,6 @@ const configure = col => {
     const getGraph = (_id, lookup) => col().aggregate([matchId(_id), lookup]).next()
     const treefy = (graph) => {
         if (!graph) return null
-
         const cache = graph.cache
         const tree = omit(graph, "cache")
 
@@ -67,10 +67,29 @@ const configure = col => {
         }
         return dbTrunk
     };
+    const searchTypes = {
+        regex: v => ({$regex: `^.*${regexEscape(v)}.*`}),
+        gt: v => ({$gt: v}),
+        [null]: v => v
+    }
+    const prepareSearch = filters => {
+        const search = {}
+        for (let i = 0; i < filters.length; i++) {
+            const filter = filters[i]
+            if (filter.value) {
+                let searchType = searchTypes[filter.type]
+                search[filter.key] = searchType && searchType(filter.value) || filter.value
+            }
+        }
+        console.log(search)
+        return search
+    }
 
     //LECTURE
-    const withIdsIn = _ids => col().find(withIdIn(_ids)).toArray()
-    const get = ({_id}) => col().findOne(withId(_id)).then(i => i || {_id, items: []})
+    const find = (filters, mixin) => col().find(filters, mixin).toArray()
+    const findOne = (filters, mixin) => col().findOne(filters, mixin)
+    const withIdsIn = _ids => find(withIdIn(_ids))
+    const get = ({_id}) => findOne(withId(_id)).then(i => i || {_id, items: []})
     const appendItemsInfos = mixin => async item => {
         const items = item.items
         const infos = await col().find(withIdIn(map(items, "_id")), mixin).toArray()
@@ -96,6 +115,11 @@ const configure = col => {
             :
             withId(item._id)
     ))
+    const search = (filters, pageSize, mixin) => col()
+        .find(prepareSearch(filters), mixin)
+        .sort({_id: 1})
+        .limit(pageSize)
+        .toArray()
 
     //ECRITURE
     const update = item => col().update(withId(item._id), ({$set: item}))
@@ -109,13 +133,12 @@ const configure = col => {
     const deleteItems = (trunkId, itemsIds) => col().update(withId(trunkId), pullItems(itemsIds))
 
     return {
-        //ECRITURE
-        withIdsIn, get, appendItemsInfos, initReadTree, readAllQuantified,
+        //LECTURE
+        withIdsIn, get, appendItemsInfos, initReadTree, readAllQuantified, search, findOne,
         //ECRITURE
         update, upsertItem, insertItem, insertOne,
         //SUPPR
         deleteOne, removeItem, deleteItems,
-
     }
 };
 

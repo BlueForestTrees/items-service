@@ -30,7 +30,8 @@
   "dependencies": {
     "errors-blueforest": "1.0.0",
     "fraction.js": "^4.0.9",
-    "mongo-queries-blueforest": "1.0.1"
+    "mongo-queries-blueforest": "1.0.1",
+    "regex-escape": "^3.4.8"
   },
   "devDependencies": {
     "babel-cli": "6.26.0",
