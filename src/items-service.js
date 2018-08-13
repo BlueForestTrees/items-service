@@ -1,4 +1,4 @@
-import {pullItem, pullItems, pushItem, quantityField, upsert, withId, matchId, withIdIn, withIdBqt} from "mongo-queries-blueforest"
+import {pullItem, quantityField, upsert, withId, matchId, withIdIn, withIdBqt} from "mongo-queries-blueforest"
 import {map, omit, forEach, find, cloneDeep} from "lodash"
 import Fraction from "fraction.js"
 import regexEscape from "regex-escape"
@@ -20,7 +20,6 @@ const configure = col => {
     //PRIVATE
     const setBqt = ({_id, quantity}) => col().update(withId(_id), ({$set: {quantity}}), upsert)
     const readBqt = async id => col().findOne(withId(id), quantityField)
-    const addItem = async (id, item) => col().update(withId(id), pushItem(item), upsert)
     const graphLookup = collectionName => ({
         $graphLookup: {
             from: collectionName,
@@ -58,7 +57,7 @@ const configure = col => {
         })
         return items
     }
-    const adaptBqt = async (left, right) => (await getSertBqt(left)).quantity.bqt / left.quantity.bqt * right.quantity.bqt
+    const adaptBqt = async (left, right) => (await getSertBqt(left)).bqt / left.bqt * right.bqt
     const getSertBqt = async trunk => {
         let dbTrunk = await readBqt(trunk._id)
         if (!dbTrunk || !dbTrunk.quantity) {
@@ -86,24 +85,24 @@ const configure = col => {
     }
 
     //LECTURE
-    const find = (filters, mixin) => col().find(filters, mixin).toArray()
+    const find = mixin => filters => col().find(filters, mixin).toArray()
     const findOne = (filters, mixin) => col().findOne(filters, mixin)
     const withIdsIn = _ids => find(withIdIn(_ids))
     const get = ({_id}) => findOne(withId(_id)).then(i => i || {_id, items: []})
-    const appendItemsInfos = mixin => async item => {
-        const items = item.items
-        const infos = await col().find(withIdIn(map(items, "_id")), mixin).toArray()
-
+    const append = (field, mixin, assign) => async items => {
+        const infos = await col().find(withIdIn(map(items, field)), mixin).toArray()
+        const results = []
         for (let i = 0; i < items.length; i++) {
             let item = items[i]
             for (let j = 0; j < infos.length; j++) {
                 let info = infos[j]
-                if (item._id.equals(info._id)) {
-                    Object.assign(item, info)
+                if (item[field].equals(info._id)) {
+                    results.push(assign(item, info))
+                    break
                 }
             }
         }
-        return item
+        return results
     }
     const initReadTree = collectionName => ({_id}) =>
         getGraph(_id, graphLookup(collectionName))
@@ -122,23 +121,23 @@ const configure = col => {
         .toArray()
 
     //ECRITURE
+    const filteredUpdate = ({filter, item}) => col().update(filter, ({$set: item}))
     const update = item => col().update(withId(item._id), ({$set: item}))
     const upsertItem = async (left, right) => removeItem(left._id, right._id).then(() => adaptBqt(left, right)).then(bqt => addItem(left._id, {...right, quantity: {bqt}}))
-    const insertItem = (left, right) => removeItem(left._id, right._id).then(() => addItem(left._id, right))
     const insertOne = item => col().insertOne(item)
 
     //SUPPR
     const deleteOne = item => col().deleteOne(item)
     const removeItem = (leftId, rightId) => col().update(withId(leftId), pullItem(rightId))
-    const deleteItems = (trunkId, itemsIds) => col().update(withId(trunkId), pullItems(itemsIds))
+    const deleteMany = (filter) => col().deleteMany(filter)
 
     return {
         //LECTURE
-        withIdsIn, get, appendItemsInfos, initReadTree, readAllQuantified, search, findOne,
+        withIdsIn, get, append, initReadTree, readAllQuantified, search, findOne, find,
         //ECRITURE
-        update, upsertItem, insertItem, insertOne,
+        update, upsertItem, insertOne, filteredUpdate,
         //SUPPR
-        deleteOne, removeItem, deleteItems,
+        deleteOne, removeItem, deleteMany,
     }
 };
 
