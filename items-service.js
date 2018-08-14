@@ -40,15 +40,11 @@ var _regexEscape2 = _interopRequireDefault(_regexEscape);
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var multiplyBqt = exports.multiplyBqt = function multiplyBqt(tree, coef) {
-    if (coef) {
-        tree.items = (0, _lodash.map)(tree.items, function (item) {
-            return item.quantity ? (0, _extends3.default)({}, item, { quantity: { bqt: (0, _fraction2.default)(item.quantity.bqt).mul(coef).valueOf() } }) : (0, _lodash.omit)(item, "quantity");
-        });
-    } else {
-        tree.items = (0, _lodash.map)(tree, function (item) {
-            return (0, _lodash.omit)(item, "quantity");
-        });
-    }
+
+    tree.items = (0, _lodash.map)(tree.items, function (item) {
+        return item.quantity ? (0, _extends3.default)({}, item, { quantity: { bqt: (0, _fraction2.default)(item.quantity.bqt).mul(coef).valueOf() } }) : (0, _lodash.omit)(item, "quantity");
+    });
+
     return tree;
 };
 
@@ -79,46 +75,17 @@ var configure = function configure(col) {
             return _ref2.apply(this, arguments);
         };
     }();
-    var graphLookup = function graphLookup(collectionName) {
+    var graphLookup = function graphLookup(collectionName, connectTo) {
         return {
             $graphLookup: {
                 from: collectionName,
-                startWith: "$items._id",
-                connectFromField: "items._id",
-                connectToField: "_id",
+                startWith: "$trunkId",
+                connectFromField: connectTo,
+                connectToField: "trunkId",
                 maxDepth: 10,
                 as: "cache"
             }
         };
-    };
-    var getGraph = function getGraph(_id, lookup) {
-        return col().aggregate([(0, _mongoQueriesBlueforest.matchId)(_id), lookup]).next();
-    };
-    var treefy = function treefy(graph) {
-        if (!graph) return null;
-        var cache = graph.cache;
-        var tree = (0, _lodash.omit)(graph, "cache");
-
-        tree.items = loadFromCache(tree, cache);
-        tree.quantity = { bqt: 1 };
-
-        return tree;
-    };
-    var loadFromCache = function loadFromCache(tree, cache) {
-        var items = [];
-        (0, _lodash.forEach)(tree.items, function (item) {
-            item.items = [];
-            var cachedItem = (0, _lodash.cloneDeep)(find(cache, { _id: item._id }));
-            if (cachedItem) {
-                multiplyBqt(cachedItem, item.quantity && item.quantity.bqt);
-                cachedItem.quantity = item.quantity;
-                cachedItem.items = loadFromCache(cachedItem, cache);
-                items.push(cachedItem);
-            } else {
-                items.push((0, _lodash.omit)(item, "items"));
-            }
-        });
-        return items;
     };
     var adaptBqt = function () {
         var _ref3 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee2(left, right) {
@@ -200,13 +167,12 @@ var configure = function configure(col) {
     var prepareSearch = function prepareSearch(filters) {
         var search = {};
         for (var i = 0; i < filters.length; i++) {
-            var filter = filters[i];
-            if (filter.value) {
-                var searchType = searchTypes[filter.type];
-                search[filter.key] = searchType && searchType(filter.value) || filter.value;
+            var _filter = filters[i];
+            if (_filter.value) {
+                var searchType = searchTypes[_filter.type];
+                search[_filter.key] = searchType && searchType(_filter.value) || _filter.value;
             }
         }
-        console.log(search);
         return search;
     };
 
@@ -218,9 +184,6 @@ var configure = function configure(col) {
     };
     var findOne = function findOne(filters, mixin) {
         return col().findOne(filters, mixin);
-    };
-    var withIdsIn = function withIdsIn(_ids) {
-        return find((0, _mongoQueriesBlueforest.withIdIn)(_ids));
     };
     var get = function get(_ref5) {
         var _id = _ref5._id;
@@ -295,24 +258,54 @@ var configure = function configure(col) {
             };
         }();
     };
-    var initReadTree = function initReadTree(collectionName) {
-        return function (_ref7) {
-            var _id = _ref7._id;
-            return getGraph(_id, graphLookup(collectionName)).then(treefy).then(function (tree) {
-                return tree || (0, _extends3.default)({}, (0, _mongoQueriesBlueforest.withIdBqt)(_id, 1), { items: [] });
+
+    /**
+     * Récupère les roots du trunk trouvé dans le cache, récursivement
+     */
+    var loadFromCache = function loadFromCache(trunk, cache) {
+        if ((0, _lodash.isNil)(trunk.bqt)) return;
+        var roots = [];
+        var cacheRoots = (0, _lodash.filter)(cache, { trunkId: trunk._id });
+        if (cacheRoots && cacheRoots.length > 0) {
+            for (var i = 0; i < cacheRoots.length; i++) {
+                var cacheRoot = cacheRoots[i];
+                var root = { _id: cacheRoot.rootId };
+                if (cacheRoot.bqt) {
+                    root.bqt = trunk.bqt * cacheRoot.bqt;
+                }
+                loadFromCache(root, cache);
+                roots.push(root);
+            }
+            trunk.items = roots;
+        }
+    };
+    var getGraph = function getGraph(filter, lookup) {
+        return col().aggregate([(0, _mongoQueriesBlueforest.match)(filter), lookup]).next();
+    };
+    var treefy = function treefy(graph) {
+        if (!graph) return null;
+        var tree = { _id: graph.trunkId, bqt: 1 };
+        loadFromCache(tree, graph.cache);
+        return tree;
+    };
+    var treeRead = function treeRead(collectionName, connectTo) {
+        return function (filter) {
+            return getGraph(filter, graphLookup(collectionName, connectTo)).then(treefy).then(function (tree) {
+                return tree || (0, _extends3.default)({}, (0, _mongoQueriesBlueforest.withIdBqt)(filter.trunkId, 1), { items: [] });
             });
         };
     };
+
     var readAllQuantified = function () {
-        var _ref8 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee5(items) {
+        var _ref7 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee5(items) {
             return _regenerator2.default.wrap(function _callee5$(_context5) {
                 while (1) {
                     switch (_context5.prev = _context5.next) {
                         case 0:
                             return _context5.abrupt("return", _promise2.default.all((0, _lodash.map)(items, function (item) {
-                                return item.quantity ? get(item).then(function (i) {
-                                    return multiplyBqt(i, item.quantity && item.quantity.bqt);
-                                }) : (0, _mongoQueriesBlueforest.withId)(item._id);
+                                return (0, _lodash.isNil)(item.bqt) ? (0, _mongoQueriesBlueforest.withId)(item._id) : get(item).then(function (i) {
+                                    return multiplyBqt(i, item.bqt);
+                                });
                             })));
 
                         case 1:
@@ -324,7 +317,7 @@ var configure = function configure(col) {
         }));
 
         return function readAllQuantified(_x6) {
-            return _ref8.apply(this, arguments);
+            return _ref7.apply(this, arguments);
         };
     }();
     var search = function search(filters, pageSize, mixin) {
@@ -332,38 +325,14 @@ var configure = function configure(col) {
     };
 
     //ECRITURE
-    var filteredUpdate = function filteredUpdate(_ref9) {
-        var filter = _ref9.filter,
-            item = _ref9.item;
+    var filteredUpdate = function filteredUpdate(_ref8) {
+        var filter = _ref8.filter,
+            item = _ref8.item;
         return col().update(filter, { $set: item });
     };
     var update = function update(item) {
         return col().update((0, _mongoQueriesBlueforest.withId)(item._id), { $set: item });
     };
-    var upsertItem = function () {
-        var _ref10 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee6(left, right) {
-            return _regenerator2.default.wrap(function _callee6$(_context6) {
-                while (1) {
-                    switch (_context6.prev = _context6.next) {
-                        case 0:
-                            return _context6.abrupt("return", removeItem(left._id, right._id).then(function () {
-                                return adaptBqt(left, right);
-                            }).then(function (bqt) {
-                                return addItem(left._id, (0, _extends3.default)({}, right, { quantity: { bqt: bqt } }));
-                            }));
-
-                        case 1:
-                        case "end":
-                            return _context6.stop();
-                    }
-                }
-            }, _callee6, undefined);
-        }));
-
-        return function upsertItem(_x7, _x8) {
-            return _ref10.apply(this, arguments);
-        };
-    }();
     var insertOne = function insertOne(item) {
         return col().insertOne(item);
     };
@@ -372,20 +341,17 @@ var configure = function configure(col) {
     var deleteOne = function deleteOne(item) {
         return col().deleteOne(item);
     };
-    var removeItem = function removeItem(leftId, rightId) {
-        return col().update((0, _mongoQueriesBlueforest.withId)(leftId), (0, _mongoQueriesBlueforest.pullItem)(rightId));
-    };
     var deleteMany = function deleteMany(filter) {
         return col().deleteMany(filter);
     };
 
     return {
         //LECTURE
-        withIdsIn: withIdsIn, get: get, append: append, initReadTree: initReadTree, readAllQuantified: readAllQuantified, search: search, findOne: findOne, find: find,
+        get: get, append: append, treeRead: treeRead, readAllQuantified: readAllQuantified, search: search, findOne: findOne, find: find,
         //ECRITURE
-        update: update, upsertItem: upsertItem, insertOne: insertOne, filteredUpdate: filteredUpdate,
+        update: update, insertOne: insertOne, filteredUpdate: filteredUpdate,
         //SUPPR
-        deleteOne: deleteOne, removeItem: removeItem, deleteMany: deleteMany
+        deleteOne: deleteOne, deleteMany: deleteMany
     };
 };
 

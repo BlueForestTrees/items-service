@@ -1,18 +1,16 @@
-import {pullItem, quantityField, upsert, withId, matchId, withIdIn, withIdBqt} from "mongo-queries-blueforest"
-import {map, omit, forEach, find, cloneDeep} from "lodash"
+import {quantityField, upsert, withId, match, withIdIn, withIdBqt} from "mongo-queries-blueforest"
+import {map, omit, forEach, find, cloneDeep, filter, isNil} from "lodash"
 import Fraction from "fraction.js"
 import regexEscape from "regex-escape"
 
 export const multiplyBqt = (tree, coef) => {
-    if (coef) {
-        tree.items = map(tree.items, item => item.quantity ?
+
+    tree.items = map(tree.items, item => item.quantity ?
             ({...item, quantity: {bqt: Fraction(item.quantity.bqt).mul(coef).valueOf()}})
             :
             omit(item, "quantity")
         )
-    } else {
-        tree.items = map(tree, item => omit(item, "quantity"))
-    }
+
     return tree
 }
 
@@ -20,43 +18,16 @@ const configure = col => {
     //PRIVATE
     const setBqt = ({_id, quantity}) => col().update(withId(_id), ({$set: {quantity}}), upsert)
     const readBqt = async id => col().findOne(withId(id), quantityField)
-    const graphLookup = collectionName => ({
+    const graphLookup = (collectionName, connectTo) => ({
         $graphLookup: {
             from: collectionName,
-            startWith: `$items._id`,
-            connectFromField: "items._id",
-            connectToField: "_id",
+            startWith: `$trunkId`,
+            connectFromField: connectTo,
+            connectToField: "trunkId",
             maxDepth: 10,
             as: "cache"
         }
     })
-    const getGraph = (_id, lookup) => col().aggregate([matchId(_id), lookup]).next()
-    const treefy = (graph) => {
-        if (!graph) return null
-        const cache = graph.cache
-        const tree = omit(graph, "cache")
-
-        tree.items = loadFromCache(tree, cache)
-        tree.quantity = {bqt: 1}
-
-        return tree
-    }
-    const loadFromCache = (tree, cache) => {
-        const items = []
-        forEach(tree.items, item => {
-            item.items = []
-            let cachedItem = cloneDeep(find(cache, {_id: item._id}))
-            if (cachedItem) {
-                multiplyBqt(cachedItem, item.quantity && item.quantity.bqt)
-                cachedItem.quantity = item.quantity
-                cachedItem.items = loadFromCache(cachedItem, cache)
-                items.push(cachedItem)
-            } else {
-                items.push(omit(item, "items"))
-            }
-        })
-        return items
-    }
     const adaptBqt = async (left, right) => (await getSertBqt(left)).bqt / left.bqt * right.bqt
     const getSertBqt = async trunk => {
         let dbTrunk = await readBqt(trunk._id)
@@ -80,14 +51,12 @@ const configure = col => {
                 search[filter.key] = searchType && searchType(filter.value) || filter.value
             }
         }
-        console.log(search)
         return search
     }
 
     //LECTURE
     const find = mixin => filters => col().find(filters, mixin).toArray()
     const findOne = (filters, mixin) => col().findOne(filters, mixin)
-    const withIdsIn = _ids => find(withIdIn(_ids))
     const get = ({_id}) => findOne(withId(_id)).then(i => i || {_id, items: []})
     const append = (field, mixin, assign) => async items => {
         const infos = await col().find(withIdIn(map(items, field)), mixin).toArray()
@@ -104,15 +73,44 @@ const configure = col => {
         }
         return results
     }
-    const initReadTree = collectionName => ({_id}) =>
-        getGraph(_id, graphLookup(collectionName))
+
+    /**
+     * Récupère les roots du trunk trouvé dans le cache, récursivement
+     */
+    const loadFromCache = (trunk, cache) => {
+        if (isNil(trunk.bqt)) return
+        const roots = []
+        const cacheRoots = filter(cache, {trunkId: trunk._id})
+        if (cacheRoots && cacheRoots.length > 0) {
+            for (let i = 0; i < cacheRoots.length; i++) {
+                const cacheRoot = cacheRoots[i]
+                const root = {_id: cacheRoot.rootId}
+                if (cacheRoot.bqt) {
+                    root.bqt = trunk.bqt * cacheRoot.bqt
+                }
+                loadFromCache(root, cache)
+                roots.push(root)
+            }
+            trunk.items = roots
+        }
+    }
+    const getGraph = (filter, lookup) => col().aggregate([match(filter), lookup]).next()
+    const treefy = (graph) => {
+        if (!graph) return null
+        const tree = {_id: graph.trunkId, bqt: 1}
+        loadFromCache(tree, graph.cache)
+        return tree
+    }
+    const treeRead = (collectionName, connectTo) => filter =>
+        getGraph(filter, graphLookup(collectionName, connectTo))
             .then(treefy)
-            .then(tree => tree || {...withIdBqt(_id, 1), items: []})
+            .then(tree => tree || {...withIdBqt(filter.trunkId, 1), items: []})
+
     const readAllQuantified = async items => Promise.all(map(items,
-        item => item.quantity ?
-            get(item).then(i => multiplyBqt(i, item.quantity && item.quantity.bqt))
-            :
+        item => isNil(item.bqt) ?
             withId(item._id)
+            :
+            get(item).then(i => multiplyBqt(i, item.bqt))
     ))
     const search = (filters, pageSize, mixin) => col()
         .find(prepareSearch(filters), mixin)
@@ -123,21 +121,19 @@ const configure = col => {
     //ECRITURE
     const filteredUpdate = ({filter, item}) => col().update(filter, ({$set: item}))
     const update = item => col().update(withId(item._id), ({$set: item}))
-    const upsertItem = async (left, right) => removeItem(left._id, right._id).then(() => adaptBqt(left, right)).then(bqt => addItem(left._id, {...right, quantity: {bqt}}))
     const insertOne = item => col().insertOne(item)
 
     //SUPPR
     const deleteOne = item => col().deleteOne(item)
-    const removeItem = (leftId, rightId) => col().update(withId(leftId), pullItem(rightId))
-    const deleteMany = (filter) => col().deleteMany(filter)
+    const deleteMany = filter => col().deleteMany(filter)
 
     return {
         //LECTURE
-        withIdsIn, get, append, initReadTree, readAllQuantified, search, findOne, find,
+        get, append, treeRead, readAllQuantified, search, findOne, find,
         //ECRITURE
-        update, upsertItem, insertOne, filteredUpdate,
+        update, insertOne, filteredUpdate,
         //SUPPR
-        deleteOne, removeItem, deleteMany,
+        deleteOne, deleteMany
     }
 };
 
