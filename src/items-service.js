@@ -1,14 +1,15 @@
 import {quantityField, upsert, withId, match, withIdIn, withIdBqt} from "mongo-queries-blueforest"
-import {map, omit, forEach, find, cloneDeep, filter, isNil} from "lodash"
+import {map, omit, forEach, find, cloneDeep, filter, isNil, each} from "lodash"
 import Fraction from "fraction.js"
 import regexEscape from "regex-escape"
 
 export const multiplyBqt = (tree, coef) => {
 
-    tree.items = map(tree.items, item => item.quantity ?
-            ({...item, quantity: {bqt: Fraction(item.quantity.bqt).mul(coef).valueOf()}})
+    tree.items = map(tree.items,
+        item => isNil(item.bqt) ?
+            omit(item, "bqt")
             :
-            omit(item, "quantity")
+            ({...item, bqt: Fraction(item.bqt).mul(coef).valueOf()})
         )
 
     return tree
@@ -55,11 +56,12 @@ const configure = col => {
     }
 
     //LECTURE
-    const find = mixin => filters => col().find(filters, mixin).toArray()
+    const findMixin = mixin => filters => col().find(filters, mixin).toArray()
+    const findNoMixin = findMixin({})
     const findOne = (filters, mixin) => col().findOne(filters, mixin)
     const get = ({_id}) => findOne(withId(_id)).then(i => i || {_id, items: []})
     const append = (field, mixin, assign) => async items => {
-        const infos = await col().find(withIdIn(map(items, field)), mixin).toArray()
+        const infos = await findMixin(mixin)(withIdIn(map(items, field)))
         const results = []
         for (let i = 0; i < items.length; i++) {
             let item = items[i]
@@ -106,12 +108,13 @@ const configure = col => {
             .then(treefy)
             .then(tree => tree || {...withIdBqt(filter.trunkId, 1), items: []})
 
-    const readAllQuantified = async items => Promise.all(map(items,
-        item => isNil(item.bqt) ?
-            withId(item._id)
-            :
-            get(item).then(i => multiplyBqt(i, item.bqt))
-    ))
+    const readAllQuantified = async items =>
+        findNoMixin({trunkId: {$in: map(items, i => i._id)}})
+            .then(dbItems => each(dbItems,
+                dbItem => dbItem.bqt *= find(items, {_id: dbItem.trunkId}).bqt
+            ))
+
+
     const search = (filters, pageSize, mixin) => col()
         .find(prepareSearch(filters), mixin)
         .sort({_id: 1})
@@ -129,7 +132,7 @@ const configure = col => {
 
     return {
         //LECTURE
-        get, append, treeRead, readAllQuantified, search, findOne, find,
+        get, append, treeRead, readAllQuantified, search, findOne, findMixin, findNoMixin,
         //ECRITURE
         update, insertOne, filteredUpdate,
         //SUPPR

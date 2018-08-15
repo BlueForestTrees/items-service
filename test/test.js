@@ -22,9 +22,7 @@ describe('TU items service', function () {
             "items": [
                 {
                     "_id": "5a6a03c03e77667641d2d2c9",
-                    "quantity": {
-                        "bqt": 4
-                    }
+                    "bqt": 4
                 }
             ]
         }
@@ -33,9 +31,7 @@ describe('TU items service', function () {
             "items": [
                 {
                     "_id": "5a6a03c03e77667641d2d2c9",
-                    "quantity": {
-                        "bqt": 8
-                    }
+                    "bqt": 8
                 }
             ]
         }

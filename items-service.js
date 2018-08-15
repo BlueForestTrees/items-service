@@ -5,10 +5,6 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.multiplyBqt = undefined;
 
-var _promise = require("babel-runtime/core-js/promise");
-
-var _promise2 = _interopRequireDefault(_promise);
-
 var _defineProperty2 = require("babel-runtime/helpers/defineProperty");
 
 var _defineProperty3 = _interopRequireDefault(_defineProperty2);
@@ -42,7 +38,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 var multiplyBqt = exports.multiplyBqt = function multiplyBqt(tree, coef) {
 
     tree.items = (0, _lodash.map)(tree.items, function (item) {
-        return item.quantity ? (0, _extends3.default)({}, item, { quantity: { bqt: (0, _fraction2.default)(item.quantity.bqt).mul(coef).valueOf() } }) : (0, _lodash.omit)(item, "quantity");
+        return (0, _lodash.isNil)(item.bqt) ? (0, _lodash.omit)(item, "bqt") : (0, _extends3.default)({}, item, { bqt: (0, _fraction2.default)(item.bqt).mul(coef).valueOf() });
     });
 
     return tree;
@@ -177,11 +173,12 @@ var configure = function configure(col) {
     };
 
     //LECTURE
-    var find = function find(mixin) {
+    var findMixin = function findMixin(mixin) {
         return function (filters) {
             return col().find(filters, mixin).toArray();
         };
     };
+    var findNoMixin = findMixin({});
     var findOne = function findOne(filters, mixin) {
         return col().findOne(filters, mixin);
     };
@@ -200,52 +197,56 @@ var configure = function configure(col) {
                         switch (_context4.prev = _context4.next) {
                             case 0:
                                 _context4.next = 2;
-                                return col().find((0, _mongoQueriesBlueforest.withIdIn)((0, _lodash.map)(items, field)), mixin).toArray();
+                                return findMixin(mixin)((0, _mongoQueriesBlueforest.withIdIn)((0, _lodash.map)(items, field)));
 
                             case 2:
                                 infos = _context4.sent;
+
+
+                                console.log("INFOS", infos);
+
                                 results = [];
                                 i = 0;
 
-                            case 5:
+                            case 6:
                                 if (!(i < items.length)) {
-                                    _context4.next = 19;
+                                    _context4.next = 20;
                                     break;
                                 }
 
                                 item = items[i];
                                 j = 0;
 
-                            case 8:
+                            case 9:
                                 if (!(j < infos.length)) {
-                                    _context4.next = 16;
+                                    _context4.next = 17;
                                     break;
                                 }
 
                                 info = infos[j];
 
                                 if (!item[field].equals(info._id)) {
-                                    _context4.next = 13;
+                                    _context4.next = 14;
                                     break;
                                 }
 
                                 results.push(assign(item, info));
-                                return _context4.abrupt("break", 16);
+                                return _context4.abrupt("break", 17);
 
-                            case 13:
+                            case 14:
                                 j++;
-                                _context4.next = 8;
+                                _context4.next = 9;
                                 break;
 
-                            case 16:
+                            case 17:
                                 i++;
-                                _context4.next = 5;
+                                _context4.next = 6;
                                 break;
-
-                            case 19:
-                                return _context4.abrupt("return", results);
 
                             case 20:
+                                return _context4.abrupt("return", results);
+
+                            case 21:
                             case "end":
                                 return _context4.stop();
                         }
@@ -302,11 +303,13 @@ var configure = function configure(col) {
                 while (1) {
                     switch (_context5.prev = _context5.next) {
                         case 0:
-                            return _context5.abrupt("return", _promise2.default.all((0, _lodash.map)(items, function (item) {
-                                return (0, _lodash.isNil)(item.bqt) ? (0, _mongoQueriesBlueforest.withId)(item._id) : get(item).then(function (i) {
-                                    return multiplyBqt(i, item.bqt);
+                            return _context5.abrupt("return", findNoMixin({ trunkId: { $in: (0, _lodash.map)(items, function (i) {
+                                        return i._id;
+                                    }) } }).then(function (dbItems) {
+                                return (0, _lodash.each)(dbItems, function (dbItem) {
+                                    return dbItem.bqt *= (0, _lodash.find)(items, { _id: dbItem.trunkId }).bqt;
                                 });
-                            })));
+                            }));
 
                         case 1:
                         case "end":
@@ -320,6 +323,7 @@ var configure = function configure(col) {
             return _ref7.apply(this, arguments);
         };
     }();
+
     var search = function search(filters, pageSize, mixin) {
         return col().find(prepareSearch(filters), mixin).sort({ _id: 1 }).limit(pageSize).toArray();
     };
@@ -347,7 +351,7 @@ var configure = function configure(col) {
 
     return {
         //LECTURE
-        get: get, append: append, treeRead: treeRead, readAllQuantified: readAllQuantified, search: search, findOne: findOne, find: find,
+        get: get, append: append, treeRead: treeRead, readAllQuantified: readAllQuantified, search: search, findOne: findOne, findMixin: findMixin, findNoMixin: findNoMixin,
         //ECRITURE
         update: update, insertOne: insertOne, filteredUpdate: filteredUpdate,
         //SUPPR
