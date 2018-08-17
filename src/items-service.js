@@ -4,14 +4,14 @@ import Fraction from "fraction.js"
 import regexEscape from "regex-escape"
 
 export const multiplyBqt = (tree, coef) => {
-
+    
     tree.items = map(tree.items,
         item => isNil(item.bqt) ?
             omit(item, "bqt")
             :
             ({...item, bqt: Fraction(item.bqt).mul(coef).valueOf()})
-        )
-
+    )
+    
     return tree
 }
 
@@ -37,7 +37,7 @@ const configure = col => {
             dbTrunk = trunk
         }
         return dbTrunk
-    };
+    }
     const searchTypes = {
         regex: v => ({$regex: `^.*${regexEscape(v)}.*`}),
         gt: v => ({$gt: v}),
@@ -54,7 +54,7 @@ const configure = col => {
         }
         return search
     }
-
+    
     //LECTURE
     const findMixin = mixin => filters => col().find(filters, mixin).toArray()
     const findNoMixin = findMixin({})
@@ -75,7 +75,7 @@ const configure = col => {
         }
         return results
     }
-
+    
     /**
      * Récupère les roots du trunk trouvé dans le cache, récursivement
      */
@@ -107,37 +107,38 @@ const configure = col => {
         getGraph(filter, graphLookup(collectionName, connectTo))
             .then(treefy)
             .then(tree => tree || {...withIdBqt(filter.trunkId, 1), items: []})
-
+    
     const readAllQuantified = async items =>
         findNoMixin({trunkId: {$in: map(items, i => i._id)}})
             .then(dbItems => each(dbItems,
                 dbItem => dbItem.bqt *= find(items, {_id: dbItem.trunkId}).bqt
             ))
-
-
+    
+    
     const search = (filters, pageSize, mixin) => col()
         .find(prepareSearch(filters), mixin)
         .sort({_id: 1})
         .limit(pageSize)
         .toArray()
-
+    
     //ECRITURE
     const filteredUpdate = ({filter, item}) => col().update(filter, ({$set: item}))
     const update = item => col().update(withId(item._id), ({$set: item}))
     const insertOne = item => col().insertOne(item)
-
+    const bulkWrite = (data, options) => col().bulkWrite(data, options || {ordered: false})
+    
     //SUPPR
     const deleteOne = item => col().deleteOne(item)
     const deleteMany = filter => col().deleteMany(filter)
-
+    
     return {
         //LECTURE
         get, append, treeRead, readAllQuantified, search, findOne, findMixin, findNoMixin,
         //ECRITURE
-        update, insertOne, filteredUpdate,
+        bulkWrite, update, insertOne, filteredUpdate,
         //SUPPR
         deleteOne, deleteMany
     }
-};
+}
 
-export default configure;
+export default configure

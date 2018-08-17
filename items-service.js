@@ -201,52 +201,48 @@ var configure = function configure(col) {
 
                             case 2:
                                 infos = _context4.sent;
-
-
-                                console.log("INFOS", infos);
-
                                 results = [];
                                 i = 0;
 
-                            case 6:
+                            case 5:
                                 if (!(i < items.length)) {
-                                    _context4.next = 20;
+                                    _context4.next = 19;
                                     break;
                                 }
 
                                 item = items[i];
                                 j = 0;
 
-                            case 9:
+                            case 8:
                                 if (!(j < infos.length)) {
-                                    _context4.next = 17;
+                                    _context4.next = 16;
                                     break;
                                 }
 
                                 info = infos[j];
 
                                 if (!item[field].equals(info._id)) {
-                                    _context4.next = 14;
+                                    _context4.next = 13;
                                     break;
                                 }
 
                                 results.push(assign(item, info));
-                                return _context4.abrupt("break", 17);
+                                return _context4.abrupt("break", 16);
 
-                            case 14:
+                            case 13:
                                 j++;
-                                _context4.next = 9;
+                                _context4.next = 8;
                                 break;
 
-                            case 17:
+                            case 16:
                                 i++;
-                                _context4.next = 6;
+                                _context4.next = 5;
                                 break;
 
-                            case 20:
+                            case 19:
                                 return _context4.abrupt("return", results);
 
-                            case 21:
+                            case 20:
                             case "end":
                                 return _context4.stop();
                         }
@@ -340,6 +336,9 @@ var configure = function configure(col) {
     var insertOne = function insertOne(item) {
         return col().insertOne(item);
     };
+    var bulkWrite = function bulkWrite(data, options) {
+        return col().bulkWrite(data, options || { ordered: false });
+    };
 
     //SUPPR
     var deleteOne = function deleteOne(item) {
@@ -353,7 +352,7 @@ var configure = function configure(col) {
         //LECTURE
         get: get, append: append, treeRead: treeRead, readAllQuantified: readAllQuantified, search: search, findOne: findOne, findMixin: findMixin, findNoMixin: findNoMixin,
         //ECRITURE
-        update: update, insertOne: insertOne, filteredUpdate: filteredUpdate,
+        bulkWrite: bulkWrite, update: update, insertOne: insertOne, filteredUpdate: filteredUpdate,
         //SUPPR
         deleteOne: deleteOne, deleteMany: deleteMany
     };
