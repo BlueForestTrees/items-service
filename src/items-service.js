@@ -59,7 +59,7 @@ const configure = col => {
     const findMixin = mixin => filters => col().find(filters, mixin).toArray()
     const findNoMixin = findMixin({})
     const findOne = (filters, mixin) => col().findOne(filters, mixin)
-    const get = ({_id}) => findOne(withId(_id)).then(i => i || {_id, items: []})
+    const get = async ({_id}) => (await findOne(withId(_id))) || undefined
     const append = (field, mixin, assign) => async items => {
         const infos = await findMixin(mixin)(withIdIn(map(items, field)))
         const results = []

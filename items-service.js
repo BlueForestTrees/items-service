@@ -182,31 +182,60 @@ var configure = function configure(col) {
     var findOne = function findOne(filters, mixin) {
         return col().findOne(filters, mixin);
     };
-    var get = function get(_ref5) {
-        var _id = _ref5._id;
-        return findOne((0, _mongoQueriesBlueforest.withId)(_id)).then(function (i) {
-            return i || { _id: _id, items: [] };
-        });
-    };
+    var get = function () {
+        var _ref5 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee4(_ref6) {
+            var _id = _ref6._id;
+            return _regenerator2.default.wrap(function _callee4$(_context4) {
+                while (1) {
+                    switch (_context4.prev = _context4.next) {
+                        case 0:
+                            _context4.next = 2;
+                            return findOne((0, _mongoQueriesBlueforest.withId)(_id));
+
+                        case 2:
+                            _context4.t0 = _context4.sent;
+
+                            if (_context4.t0) {
+                                _context4.next = 5;
+                                break;
+                            }
+
+                            _context4.t0 = undefined;
+
+                        case 5:
+                            return _context4.abrupt("return", _context4.t0);
+
+                        case 6:
+                        case "end":
+                            return _context4.stop();
+                    }
+                }
+            }, _callee4, undefined);
+        }));
+
+        return function get(_x5) {
+            return _ref5.apply(this, arguments);
+        };
+    }();
     var append = function append(field, mixin, assign) {
         return function () {
-            var _ref6 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee4(items) {
+            var _ref7 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee5(items) {
                 var infos, results, i, item, j, info;
-                return _regenerator2.default.wrap(function _callee4$(_context4) {
+                return _regenerator2.default.wrap(function _callee5$(_context5) {
                     while (1) {
-                        switch (_context4.prev = _context4.next) {
+                        switch (_context5.prev = _context5.next) {
                             case 0:
-                                _context4.next = 2;
+                                _context5.next = 2;
                                 return findMixin(mixin)((0, _mongoQueriesBlueforest.withIdIn)((0, _lodash.map)(items, field)));
 
                             case 2:
-                                infos = _context4.sent;
+                                infos = _context5.sent;
                                 results = [];
                                 i = 0;
 
                             case 5:
                                 if (!(i < items.length)) {
-                                    _context4.next = 19;
+                                    _context5.next = 19;
                                     break;
                                 }
 
@@ -215,43 +244,43 @@ var configure = function configure(col) {
 
                             case 8:
                                 if (!(j < infos.length)) {
-                                    _context4.next = 16;
+                                    _context5.next = 16;
                                     break;
                                 }
 
                                 info = infos[j];
 
                                 if (!item[field].equals(info._id)) {
-                                    _context4.next = 13;
+                                    _context5.next = 13;
                                     break;
                                 }
 
                                 results.push(assign(item, info));
-                                return _context4.abrupt("break", 16);
+                                return _context5.abrupt("break", 16);
 
                             case 13:
                                 j++;
-                                _context4.next = 8;
+                                _context5.next = 8;
                                 break;
 
                             case 16:
                                 i++;
-                                _context4.next = 5;
+                                _context5.next = 5;
                                 break;
 
                             case 19:
-                                return _context4.abrupt("return", results);
+                                return _context5.abrupt("return", results);
 
                             case 20:
                             case "end":
-                                return _context4.stop();
+                                return _context5.stop();
                         }
                     }
-                }, _callee4, undefined);
+                }, _callee5, undefined);
             }));
 
-            return function (_x5) {
-                return _ref6.apply(this, arguments);
+            return function (_x6) {
+                return _ref7.apply(this, arguments);
             };
         }();
     };
@@ -294,12 +323,12 @@ var configure = function configure(col) {
     };
 
     var readAllQuantified = function () {
-        var _ref7 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee5(items) {
-            return _regenerator2.default.wrap(function _callee5$(_context5) {
+        var _ref8 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee6(items) {
+            return _regenerator2.default.wrap(function _callee6$(_context6) {
                 while (1) {
-                    switch (_context5.prev = _context5.next) {
+                    switch (_context6.prev = _context6.next) {
                         case 0:
-                            return _context5.abrupt("return", findNoMixin({ trunkId: { $in: (0, _lodash.map)(items, function (i) {
+                            return _context6.abrupt("return", findNoMixin({ trunkId: { $in: (0, _lodash.map)(items, function (i) {
                                         return i._id;
                                     }) } }).then(function (dbItems) {
                                 return (0, _lodash.each)(dbItems, function (dbItem) {
@@ -309,14 +338,14 @@ var configure = function configure(col) {
 
                         case 1:
                         case "end":
-                            return _context5.stop();
+                            return _context6.stop();
                     }
                 }
-            }, _callee5, undefined);
+            }, _callee6, undefined);
         }));
 
-        return function readAllQuantified(_x6) {
-            return _ref7.apply(this, arguments);
+        return function readAllQuantified(_x7) {
+            return _ref8.apply(this, arguments);
         };
     }();
 
@@ -325,9 +354,9 @@ var configure = function configure(col) {
     };
 
     //ECRITURE
-    var filteredUpdate = function filteredUpdate(_ref8) {
-        var filter = _ref8.filter,
-            item = _ref8.item;
+    var filteredUpdate = function filteredUpdate(_ref9) {
+        var filter = _ref9.filter,
+            item = _ref9.item;
         return col().update(filter, { $set: item });
     };
     var update = function update(item) {
