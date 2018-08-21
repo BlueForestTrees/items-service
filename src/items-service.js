@@ -44,14 +44,16 @@ const configure = col => {
         [null]: v => v
     }
     const prepareSearch = filters => {
+        console.log("FILTERS", filters)
         const search = {}
         for (let i = 0; i < filters.length; i++) {
             const filter = filters[i]
-            if (filter.value) {
+            if (filter.value !== undefined) {
                 let searchType = searchTypes[filter.type]
                 search[filter.key] = searchType && searchType(filter.value) || filter.value
             }
         }
+        console.log("SEARCH", search)
         return search
     }
     

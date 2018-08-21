@@ -161,14 +161,16 @@ var configure = function configure(col) {
         return v;
     });
     var prepareSearch = function prepareSearch(filters) {
+        console.log("FILTERS", filters);
         var search = {};
         for (var i = 0; i < filters.length; i++) {
             var _filter = filters[i];
-            if (_filter.value) {
+            if (_filter.value !== undefined) {
                 var searchType = searchTypes[_filter.type];
                 search[_filter.key] = searchType && searchType(_filter.value) || _filter.value;
             }
         }
+        console.log("SEARCH", search);
         return search;
     };
 
