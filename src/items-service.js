@@ -1,4 +1,3 @@
-import {quantityField, upsert, withId, match, withIdIn, withIdBqt} from "mongo-queries-blueforest"
 import {map, omit, forEach, find, cloneDeep, filter, isNil, each} from "lodash"
 import Fraction from "fraction.js"
 import regexEscape from "regex-escape"
@@ -17,8 +16,8 @@ export const multiplyBqt = (tree, coef) => {
 
 const configure = col => {
     //PRIVATE
-    const setBqt = ({_id, quantity}) => col().update(withId(_id), ({$set: {quantity}}), upsert)
-    const readBqt = async id => col().findOne(withId(id), quantityField)
+    const setBqt = ({_id, quantity}) => col().update(({_id}), ({$set: {quantity}}), {upsert: true})
+    const readBqt = async _id => col().findOne(({_id}), {quantity: 1})
     const graphLookup = (collectionName, connectTo) => ({
         $graphLookup: {
             from: collectionName,
@@ -61,7 +60,7 @@ const configure = col => {
     const findOne = (filters, mixin) => col().findOne(filters, mixin)
     const get = async ({_id}) => (await findOne(withId(_id))) || undefined
     const append = (field, mixin, assign) => async items => {
-        const infos = await findMixin(mixin)(withIdIn(map(items, field)))
+        const infos = await findMixin(mixin)({_id: {$in: map(items, field)}})
         const results = []
         for (let i = 0; i < items.length; i++) {
             let item = items[i]
@@ -96,7 +95,7 @@ const configure = col => {
             trunk.items = roots
         }
     }
-    const getGraph = (filter, lookup) => col().aggregate([match(filter), lookup]).next()
+    const getGraph = (filter, lookup) => col().aggregate([{$match: filter}, lookup]).next()
     const treefy = (graph) => {
         if (!graph) return null
         const tree = {_id: graph.trunkId, bqt: 1}

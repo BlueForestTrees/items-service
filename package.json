@@ -2,19 +2,16 @@
   "name": "items-service",
   "version": "1.0.7",
   "description": "Les services commun de gestion d'items dans blueforest",
-  "main": "index.js",
+  "main": "dist/index.js",
   "files": [
-    "index.js"
+    "dist"
   ],
   "scripts": {
     "init": "yarn",
     "test": "mocha --exit --recursive test --require babel-register",
-    "build": "rimraf index.js && npm run test && babel src --out-dir .",
+    "build": "rimraf index.js && npm run test && babel src -d dist",
     "prepublishOnly": "npm version patch && npm run build",
     "npmpublish": "npm publish",
-    "up-errors": "yarn upgrade -L errors-blueforest",
-    "up-query": "yarn upgrade -L mongo-queries-blueforest",
-    "up-units": "yarn upgrade -L unit-manip",
     "up-all": "npm run up-errors && npm run up-query && npm run up-units"
   },
   "repository": {
@@ -28,10 +25,8 @@
   },
   "homepage": "https://github.com/BlueForestTrees/items-service#readme",
   "dependencies": {
-    "errors-blueforest": "1.0.1",
-    "fraction.js": "^4.0.9",
-    "mongo-queries-blueforest": "1.0.6",
-    "regex-escape": "^3.4.8"
+    "fraction.js": "4.0.9",
+    "regex-escape": "3.4.8"
   },
   "devDependencies": {
     "babel-cli": "6.26.0",
