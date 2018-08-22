@@ -1,6 +1,6 @@
 {
   "name": "items-service",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "Les services commun de gestion d'items dans blueforest",
   "main": "dist/index.js",
   "files": [
