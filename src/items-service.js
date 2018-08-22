@@ -58,7 +58,7 @@ const configure = col => {
     const findMixin = mixin => filters => col().find(filters, mixin).toArray()
     const findNoMixin = findMixin({})
     const findOne = (filters, mixin) => col().findOne(filters, mixin)
-    const get = async ({_id}) => (await findOne(withId(_id))) || undefined
+    const get = async ({_id}) => (await findOne(({_id}))) || undefined
     const append = (field, mixin, assign) => async items => {
         const infos = await findMixin(mixin)({_id: {$in: map(items, field)}})
         const results = []
@@ -122,7 +122,7 @@ const configure = col => {
     
     //ECRITURE
     const filteredUpdate = ({filter, item}) => col().update(filter, ({$set: item}))
-    const update = item => col().update(withId(item._id), ({$set: item}))
+    const update = item => col().update({_id:item._id}, ({$set: item}))
     const insertOne = item => col().insertOne(item)
     const bulkWrite = (data, options) => col().bulkWrite(data, options || {ordered: false})
     
