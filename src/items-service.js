@@ -44,7 +44,6 @@ const configure = col => {
         [null]: v => v
     }
     const prepareSearch = filters => {
-        console.log("FILTERS", filters)
         const search = {}
         for (let i = 0; i < filters.length; i++) {
             const filter = filters[i]
@@ -53,7 +52,6 @@ const configure = col => {
                 search[filter.key] = searchType && searchType(filter.value) || filter.value
             }
         }
-        console.log("SEARCH", search)
         return search
     }
     
@@ -108,7 +106,7 @@ const configure = col => {
     const treeRead = (collectionName, connectTo) => filter =>
         getGraph(filter, graphLookup(collectionName, connectTo))
             .then(treefy)
-            .then(tree => tree || {...withIdBqt(filter.trunkId, 1), items: []})
+            .then(tree => tree || {_id: filter.trunkId, bqt: 1, items: []})
     
     const readAllQuantified = async items =>
         findNoMixin({trunkId: {$in: map(items, i => i._id)}})

@@ -161,7 +161,6 @@ var configure = function configure(col) {
         return v;
     });
     var prepareSearch = function prepareSearch(filters) {
-        console.log("FILTERS", filters);
         var search = {};
         for (var i = 0; i < filters.length; i++) {
             var _filter = filters[i];
@@ -170,7 +169,6 @@ var configure = function configure(col) {
                 search[_filter.key] = searchType && searchType(_filter.value) || _filter.value;
             }
         }
-        console.log("SEARCH", search);
         return search;
     };
 
@@ -319,7 +317,7 @@ var configure = function configure(col) {
     var treeRead = function treeRead(collectionName, connectTo) {
         return function (filter) {
             return getGraph(filter, graphLookup(collectionName, connectTo)).then(treefy).then(function (tree) {
-                return tree || (0, _extends3.default)({}, (0, _mongoQueriesBlueforest.withIdBqt)(filter.trunkId, 1), { items: [] });
+                return tree || { _id: filter.trunkId, bqt: 1, items: [] };
             });
         };
     };
