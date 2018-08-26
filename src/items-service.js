@@ -2,6 +2,8 @@ import {map, omit, forEach, find, cloneDeep, filter, isNil, each} from "lodash"
 import Fraction from "fraction.js"
 import regexEscape from "regex-escape"
 
+const debug = require('debug')('api:items')
+
 export const multiplyBqt = (tree, coef) => {
     
     tree.items = map(tree.items,
@@ -18,12 +20,12 @@ const configure = col => {
     //PRIVATE
     const setBqt = ({_id, quantity}) => col().update(({_id}), ({$set: {quantity}}), {upsert: true})
     const readBqt = async _id => col().findOne(({_id}), {quantity: 1})
-    const graphLookup = (collectionName, connectTo) => ({
+    const graphLookup = (collectionName, connectFrom, connectTo) => ({
         $graphLookup: {
             from: collectionName,
-            startWith: `$trunkId`,
+            startWith: `$${connectFrom}`,
             connectFromField: connectTo,
-            connectToField: "trunkId",
+            connectToField: connectFrom,
             maxDepth: 10,
             as: "cache"
         }
@@ -75,9 +77,7 @@ const configure = col => {
         return results
     }
     
-    /**
-     * Récupère les roots du trunk trouvé dans le cache, récursivement
-     */
+    
     const loadFromCache = (trunk, cache) => {
         if (isNil(trunk.bqt)) return
         const roots = []
@@ -102,10 +102,14 @@ const configure = col => {
         loadFromCache(tree, graph.cache)
         return tree
     }
-    const treeRead = (collectionName, connectTo) => filter =>
-        getGraph(filter, graphLookup(collectionName, connectTo))
-            .then(treefy)
-            .then(tree => tree || {_id: filter.trunkId, bqt: 1, items: []})
+    const treeRead = (collectionName, connectFrom, connectTo) => filter => {
+        
+        debug("graph req!! %o %o", connectFrom, connectTo, filter)
+        
+        return getGraph(filter, graphLookup(collectionName, connectFrom, connectTo))
+            // .then(treefy)
+            // .then(tree => tree || {_id: filter[connectFrom], bqt: 1, items: []})
+    }
     
     const readAllQuantified = async items =>
         findNoMixin({trunkId: {$in: map(items, i => i._id)}})
@@ -122,7 +126,7 @@ const configure = col => {
     
     //ECRITURE
     const filteredUpdate = ({filter, item}) => col().update(filter, ({$set: item}))
-    const update = item => col().update({_id:item._id}, ({$set: item}))
+    const update = item => col().update({_id: item._id}, ({$set: item}))
     const insertOne = item => col().insertOne(item)
     const bulkWrite = (data, options) => col().bulkWrite(data, options || {ordered: false})
     
