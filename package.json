@@ -25,7 +25,7 @@
   },
   "homepage": "https://github.com/BlueForestTrees/items-service#readme",
   "dependencies": {
-    "debug": "^3.1.0",
+    "debug": "3.1.0",
     "fraction.js": "4.0.9",
     "regex-escape": "3.4.8"
   },
