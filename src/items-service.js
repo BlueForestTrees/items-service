@@ -53,10 +53,16 @@ const configure = col => {
                 search[filter.key] = searchType && searchType(filter.value) || filter.value
             }
         }
+        debug("search %o", search)
         return search
     }
     
     //LECTURE
+    const search = (filters, limit, mixin) => col()
+        .find(prepareSearch(filters), mixin)
+        .sort({_id: 1})
+        .limit(limit)
+        .toArray()
     const findMixin = mixin => filters => col().find(filters, mixin).toArray()
     const findNoMixin = findMixin({})
     const findOne = (filters, mixin) => col().findOne(filters, mixin)
@@ -102,27 +108,17 @@ const configure = col => {
         loadFromCache(tree, graph.cache)
         return tree
     }
-    const treeRead = (collectionName, connectFrom, connectTo) => filter => {
-        
-        debug("graph req!! %o %o", connectFrom, connectTo, filter)
-        
-        return getGraph(filter, graphLookup(collectionName, connectFrom, connectTo))
-            // .then(treefy)
-            // .then(tree => tree || {_id: filter[connectFrom], bqt: 1, items: []})
-    }
+    const treeRead = (collectionName, connectFrom, connectTo) => filter =>
+        getGraph(filter, graphLookup(collectionName, connectFrom, connectTo))
+            .then(treefy)
+            .then(tree => tree || {_id: filter[connectFrom], bqt: 1, items: []})
+
     
     const readAllQuantified = async items =>
         findNoMixin({trunkId: {$in: map(items, i => i._id)}})
             .then(dbItems => each(dbItems,
                 dbItem => dbItem.bqt *= find(items, {_id: dbItem.trunkId}).bqt
             ))
-    
-    
-    const search = (filters, pageSize, mixin) => col()
-        .find(prepareSearch(filters), mixin)
-        .sort({_id: 1})
-        .limit(pageSize)
-        .toArray()
     
     //ECRITURE
     const filteredUpdate = ({filter, item}) => col().update(filter, ({$set: item}))
