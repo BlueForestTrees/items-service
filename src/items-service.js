@@ -42,6 +42,7 @@ const configure = col => {
     const searchTypes = {
         regex: v => ({$regex: `^.*${regexEscape(v)}.*`}),
         gt: v => ({$gt: v}),
+        ne: v => ({$ne: v}),
         [null]: v => v
     }
     const prepareSearch = filters => {
