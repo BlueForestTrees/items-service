@@ -5,14 +5,14 @@ import regexEscape from "regex-escape"
 const debug = require('debug')('api:items')
 
 export const multiplyBqt = (tree, coef) => {
-    
+
     tree.items = map(tree.items,
         item => isNil(item.bqt) ?
             omit(item, "bqt")
             :
             ({...item, bqt: Fraction(item.bqt).mul(coef).valueOf()})
     )
-    
+
     return tree
 }
 
@@ -57,7 +57,7 @@ const configure = col => {
         debug("search %o", search)
         return search
     }
-    
+
     //LECTURE
     const search = (filters, limit, mixin) => col()
         .find(prepareSearch(filters), mixin)
@@ -75,16 +75,20 @@ const configure = col => {
             let item = items[i]
             for (let j = 0; j < infos.length; j++) {
                 let info = infos[j]
-                if (item[field].equals(info._id)) {
-                    results.push(assign(item, info))
-                    break
+                if (item[field]) {
+                    if (item[field].equals(info._id)) {
+                        results.push(assign(item, info))
+                        break
+                    }
+                } else {
+                    debug("Append : Un document devrait porter le champ %o", field)
                 }
             }
         }
         return results
     }
-    
-    
+
+
     const loadFromCache = (trunk, cache) => {
         if (isNil(trunk.bqt)) return
         const roots = []
@@ -114,23 +118,23 @@ const configure = col => {
             .then(treefy)
             .then(tree => tree || {_id: filter[connectFrom], bqt: 1, items: []})
 
-    
+
     const readAllQuantified = async items =>
         findNoMixin({trunkId: {$in: map(items, i => i._id)}})
             .then(dbItems => each(dbItems,
                 dbItem => dbItem.bqt *= find(items, {_id: dbItem.trunkId}).bqt
             ))
-    
+
     //ECRITURE
     const filteredUpdate = ({filter, item}) => col().update(filter, ({$set: item}))
     const update = item => col().update({_id: item._id}, ({$set: item}))
     const insertOne = item => col().insertOne(item)
     const bulkWrite = (data, options) => col().bulkWrite(data, options || {ordered: false})
-    
+
     //SUPPR
     const deleteOne = item => col().deleteOne(item)
     const deleteMany = filter => col().deleteMany(filter)
-    
+
     return {
         //LECTURE
         get, append, treeRead, readAllQuantified, search, findOne, findMixin, findNoMixin,
