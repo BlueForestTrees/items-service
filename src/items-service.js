@@ -81,7 +81,8 @@ const configure = col => {
                         break
                     }
                 } else {
-                    debug("%o, Append: Le document %o devrait porter le champ %o", col, item._id, field)
+                    debug("append: Le document %o devrait porter le champ %o", col, item._id, field)
+                    break
                 }
             }
         }
