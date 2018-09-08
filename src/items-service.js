@@ -117,7 +117,6 @@ const configure = col => {
     const treeRead = (collectionName, connectFrom, connectTo) => filter =>
         getGraph(filter, graphLookup(collectionName, connectFrom, connectTo))
             .then(treefy)
-            .then(tree => tree || {_id: filter[connectFrom], bqt: 1, items: []})
 
 
     const readAllQuantified = async items =>
