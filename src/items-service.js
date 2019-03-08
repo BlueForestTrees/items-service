@@ -1,20 +1,9 @@
 import {map, omit, forEach, find, cloneDeep, filter, isNil, each} from "lodash"
-import Fraction from "fraction.js"
 import regexEscape from "regex-escape"
 
 const debug = require('debug')('api:items')
 
-export const multiplyBqt = (tree, coef) => {
 
-    tree.items = map(tree.items,
-        item => isNil(item.bqt) ?
-            omit(item, "bqt")
-            :
-            ({...item, bqt: Fraction(item.bqt).mul(coef).valueOf()})
-    )
-
-    return tree
-}
 
 const configure = col => {
     //PRIVATE
